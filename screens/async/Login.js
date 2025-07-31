@@ -1,8 +1,9 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import React, { useContext, useState } from 'react';
-import { View, Text, TextInput, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import React, { useContext, useState, useRef } from 'react';
+import { View, Text, TextInput, StyleSheet, TouchableOpacity, Alert, TouchableWithoutFeedback, Keyboard } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { AuthContext } from '../../context/AuthContext';
+
 
 
 const Login = () => {
@@ -10,6 +11,13 @@ const Login = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const navigation = useNavigation();
+    const input = useRef();
+
+    const dismissFocus = () => {
+        input.current?.blur();
+        input.current?.blur();
+    };
+
 
     const handleLogin = async () => {
         const storedEmail = await AsyncStorage.getItem('EMAIL');
@@ -29,33 +37,40 @@ const Login = () => {
     };
 
     return (
-        <View style={styles.container}>
-            <Text style={styles.title}>Login</Text>
+        <TouchableWithoutFeedback onPress={() => {
+            dismissFocus();
+            Keyboard.dismiss();  // Also hides keyboard
+        }}>
+            <View style={styles.container}>
+                <Text style={styles.title}>Login</Text>
 
-            <TextInput
-                style={styles.input}
-                placeholder="Enter email"
-                keyboardType="email-address"
-                value={email}
-                onChangeText={txt => setEmail(txt)}
-            />
+                <TextInput
+                    style={styles.input}
+                    placeholder="Enter email"
+                    keyboardType="email-address"
+                    value={email}
+                    onChangeText={txt => setEmail(txt)}
+                    ref={dismissFocus}
+                />
 
-            <TextInput
-                style={styles.input}
-                placeholder="Enter password"
-                secureTextEntry
-                value={password}
-                onChangeText={txt => setPassword(txt)}
-            />
+                <TextInput
+                    style={styles.input}
+                    placeholder="Enter password"
+                    secureTextEntry
+                    value={password}
+                    onChangeText={txt => setPassword(txt)}
+                    ref={dismissFocus}
+                />
 
-            <TouchableOpacity style={styles.button} onPress={() => { handleLogin() }}>
-                <Text style={styles.text}>Login</Text>
-            </TouchableOpacity>
+                <TouchableOpacity style={styles.button} onPress={() => { handleLogin() }}>
+                    <Text style={styles.text}>Login</Text>
+                </TouchableOpacity>
 
-            <TouchableOpacity onPress={() => navigation.navigate('SignUp')}>
-                <Text style={{ marginTop: 20, color: 'blue' }}>Don't have an account? Sign Up</Text>
-            </TouchableOpacity>
-        </View>
+                <TouchableOpacity onPress={() => navigation.navigate('SignUp')}>
+                    <Text style={{ marginTop: 20, color: 'blue' }}>Don't have an account? Sign Up</Text>
+                </TouchableOpacity>
+            </View>
+        </TouchableWithoutFeedback>
     );
 };
 

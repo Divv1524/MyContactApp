@@ -42,7 +42,7 @@ const Contact = () => {
 
       if (match) {
         await Contacts.deleteContact(match);
-        console.log('🗑️ Contact deleted from device');
+        console.log('Contact deleted from device');
       }
     } catch (err) {
       console.warn('Error deleting contact from device:', err);
