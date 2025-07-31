@@ -5,21 +5,29 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const Intro = () => {
     const navigation = useNavigation();
+
     useEffect(() => {
         setTimeout(() => {
             checkLogin();
         }, 3000);
     }, []);
+
     const checkLogin = async () => {
-        const email = await AsyncStorage.getItem('EMAIL');
-        const pass = await AsyncStorage.getItem('PASSWORD');
-        if (email !== null) {
-            navigation.navigate('Contact');
+        try {
+            const loginStatus = await AsyncStorage.getItem('LOGIN_STATUS');
+
+            if (loginStatus === 'true') {
+                navigation.replace('Contact'); // User is logged in
+            } else {
+                navigation.replace('Login'); // User is logged out
+            }
+        } catch (err) {
+            console.log('AsyncStorage error:', err);
+            navigation.replace('Login');
         }
-        else {
-            navigation.navigate('Login');
-        }
-    }
+    };
+
+
     return (
         <View style={styles.container}>
             <Text style={styles.title}>My Contact</Text>
@@ -31,9 +39,9 @@ export default Intro;
 
 const styles = StyleSheet.create({
     container: {
-        flex: 1,                // take full screen
-        justifyContent: 'center', // center vertically
-        alignItems: 'center',     // center horizontally
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
         backgroundColor: '#f2f2f2',
     },
     title: {
@@ -42,5 +50,3 @@ const styles = StyleSheet.create({
         color: '#333',
     },
 });
-
-

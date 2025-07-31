@@ -1,83 +1,76 @@
+import React, { useState } from 'react';
+import { View, TextInput, TouchableOpacity, Text, StyleSheet, Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
-import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
 
-let contacts=[];
 const AddContact = () => {
   const [name, setName] = useState('');
   const [mobile, setMobile] = useState('');
-  const navigation= useNavigation()
-  const saveContacts= async()=>{
-    let tempContact=[];
-    contacts=[];
-    let x = JSON.parse(await AsyncStorage.getItem('CONTACTS') || '[]');
-    tempContact=x;
-    tempContact.map(item=>{
-        contacts.push(item);
-    });                  
-    contacts.push({name: name, mobile: mobile});
-    await AsyncStorage.setItem('CONTACTS', JSON.stringify(contacts));
-    console.log("✅ Contact saved:", { name, mobile });
-    navigation.goBack();
+  const navigation = useNavigation();
+
+  const validateMobile = (number) => {
+    const mobileRegex = /^[0-9]{10}$/;
+    return mobileRegex.test(number);
   };
+
+  const saveContact = async () => {
+    if (!name.trim() || !mobile.trim()) {
+      Alert.alert('Error', 'Both fields are required.');
+      return;
+    }
+
+    if (!validateMobile(mobile)) {
+      Alert.alert('Invalid Mobile Number', 'Enter a valid 10-digit number.');
+      return;
+    }
+
+    try {
+      const existingContacts = JSON.parse(await AsyncStorage.getItem('CONTACTS')) || [];
+      const duplicate = existingContacts.find(
+        (contact) => contact.mobile === mobile
+      );
+      if (duplicate) {
+        Alert.alert('Duplicate Contact','A contact with this mobile number already exists.');
+        return;
+      }
+      const newContact = { name, mobile };
+      const updatedContacts = [...existingContacts, newContact];
+      await AsyncStorage.setItem('CONTACTS', JSON.stringify(updatedContacts));
+      console.log('Contact saved:', newContact);
+      navigation.goBack();
+    } catch (error) {
+      console.log('Error saving contact:', error);
+      Alert.alert('Error', 'Failed to save contact');
+    }
+  };
+
   return (
     <View style={styles.container}>
       <TextInput
         style={styles.input}
         placeholder="Enter Contact Name"
         value={name}
-        onChangeText={txt =>setName(txt)}
+        onChangeText={setName}
       />
-
       <TextInput
         style={styles.input}
         placeholder="Enter Mobile Number"
-        keyboardType="number-pad"
         value={mobile}
-        onChangeText={txt =>setMobile(txt)}
+        onChangeText={setMobile}
+        keyboardType="number-pad"
       />
-
-      <TouchableOpacity style={styles.button} onPress={() =>{saveContacts()}}>
-              <Text style={styles.title}>Save Contact</Text>
-            </TouchableOpacity>
-
+      <TouchableOpacity style={styles.button} onPress={saveContact}>
+        <Text style={styles.buttonText}>Save Contact</Text>
+      </TouchableOpacity>
     </View>
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 20,
-    justifyContent: 'center',
-    backgroundColor: '#e9f5f8',
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    textAlign: 'center',
-  },
-  input: {
-    height: 50,
-    width:'90%',
-    borderColor: '#ccc',
-    borderWidth: 2,
-    alignSelf:'center',
-    marginTop: 50,
-    paddingLeft: 20,
-    borderRadius: 10,
-  },
-  button: {
-    backgroundColor:'#80c3d8',
-    height:50,
-    width:'90%',
-    borderRadius: 20,
-    alignSelf:'center',
-    marginTop: 30,
-    justifyContent:'center'
-
-  },
-});
-
 export default AddContact;
+
+const styles = StyleSheet.create({
+  container: { flex: 1, justifyContent: 'center', padding: 20, backgroundColor: '#f0f8ff' },
+  input: { borderWidth: 1, borderColor: '#999', padding: 10, marginVertical: 10, borderRadius: 8 },
+  button: { backgroundColor: '#3498db', padding: 15, borderRadius: 8, marginTop: 10 },
+  buttonText: { color: '#fff', textAlign: 'center', fontWeight: 'bold' },
+});
