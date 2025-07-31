@@ -3,6 +3,7 @@ import React, { useState, useEffect, useContext } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation, useIsFocused } from '@react-navigation/native';
 import { AuthContext } from '../../context/AuthContext';
+import Contacts from 'react-native-contacts'
 
 
 const Contact = () => {
@@ -23,10 +24,30 @@ const Contact = () => {
   };
 
   const deleteContact = async (index) => {
+    const contactToDelete = contactList[index];
     const updatedContacts = contactList.filter((item, ind) => ind !== index);
     setContactList(updatedContacts);
     await AsyncStorage.setItem('CONTACTS', JSON.stringify(updatedContacts));
-  };
+
+   // Delete from device contacts
+    try {
+      const deviceContacts = await Contacts.getAll();
+
+      const match = deviceContacts.find(c =>
+        c.givenName === contactToDelete.name &&
+        c.phoneNumbers.some(p =>
+          p.number.replace(/\s/g, '') === contactToDelete.mobile
+        )
+      );
+
+      if (match) {
+        await Contacts.deleteContact(match);
+        console.log('🗑️ Contact deleted from device');
+      }
+    } catch (err) {
+      console.warn('Error deleting contact from device:', err);
+    }
+}
 
   const handleLogout = async () => {
     await logout();
