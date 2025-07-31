@@ -1,12 +1,15 @@
 import { View, Text, TouchableOpacity, StyleSheet, FlatList } from 'react-native';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation, useIsFocused } from '@react-navigation/native';
+import { AuthContext } from '../../context/AuthContext';
+
 
 const Contact = () => {
   const navigation = useNavigation();
   const isFocused = useIsFocused();
   const [contactList, setContactList] = useState([]);
+  const { logout } = useContext(AuthContext);
 
   useEffect(() => {
     getData();
@@ -25,8 +28,9 @@ const Contact = () => {
     await AsyncStorage.setItem('CONTACTS', JSON.stringify(updatedContacts));
   };
 
-  const logout = async () => {
-    await AsyncStorage.setItem('LOGIN_STATUS', 'false'); // only change login status
+  const handleLogout = async () => {
+    await logout();
+    // await AsyncStorage.setItem('LOGIN_STATUS', 'false');
     navigation.navigate('Login'); // go to login screen
   };
 
@@ -52,7 +56,7 @@ const Contact = () => {
         <Text style={styles.text}>Add New Contact</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity style={styles.logoutbutton} onPress={logout}>
+      <TouchableOpacity style={styles.logoutbutton} onPress={handleLogout}>
         <Text style={styles.text}>Log Out</Text>
       </TouchableOpacity>
     </View>

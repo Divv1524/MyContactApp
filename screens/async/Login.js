@@ -1,9 +1,12 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import React, { useState } from 'react';
+import React, { useContext, useState } from 'react';
 import { View, Text, TextInput, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { AuthContext } from '../../context/AuthContext';
+
 
 const Login = () => {
+    const { login } = useContext(AuthContext);
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const navigation = useNavigation();
@@ -16,9 +19,10 @@ const Login = () => {
         console.log('Entered Email:', email);
         console.log('Entered Password:', password);
         if (email.trim() === storedEmail && password.trim() === storedPassword) {
+            await login();
+            // await AsyncStorage.setItem('LOGIN_STATUS', 'true');
             Alert.alert('Welcome!');
             navigation.replace('Contact');
-            await AsyncStorage.setItem('LOGIN_STATUS', 'true');
         } else {
             Alert.alert('Login Failed', 'Invalid credentials');
         }
@@ -54,6 +58,9 @@ const Login = () => {
         </View>
     );
 };
+
+export default Login;
+
 
 const styles = StyleSheet.create({
     container: {
@@ -97,4 +104,4 @@ const styles = StyleSheet.create({
     }
 });
 
-export default Login;
+
