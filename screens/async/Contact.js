@@ -2,9 +2,10 @@ import { View, Text, TouchableOpacity, StyleSheet, FlatList, Alert } from 'react
 import React from 'react';
 import { useNavigation } from '@react-navigation/native';
 import { useSelector, useDispatch } from 'react-redux';
-import { deleteContact } from '../../redux/action/action';
-import { logout } from '../../redux/action/authActions';
+import { deleteContact } from '../../redux/slice/contactSlices';
+
 import Contacts from 'react-native-contacts';
+import { logout } from '../../redux/slice/authSlices';
 
 const Contact = () => {
   const navigation = useNavigation();
@@ -115,7 +116,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     alignSelf: 'center',
     borderRadius: 10,
-    marginTop: 10,
+    marginTop: 25,
     flexDirection: 'row',
     alignItems: 'center',
     paddingLeft: 20,

@@ -2,16 +2,16 @@
  * @format
  */
 
+// index.js
 import { AppRegistry } from 'react-native';
 import { Provider } from 'react-redux';
 import { PersistGate } from 'redux-persist/integration/react';
-import { store, persistor } from './redux/store'; // make sure the path is correct
+import { store, persistor } from './redux/store';
 import App from './App';
 import { name as appName } from './app.json';
 
 const AppRedux = () => (
-    
-  <Provider store={store}> // Wraps your entire app with Redux store access.
+  <Provider store={store}>
     <PersistGate loading={null} persistor={persistor}>
       <App />
     </PersistGate>
@@ -19,3 +19,5 @@ const AppRedux = () => (
 );
 
 AppRegistry.registerComponent(appName, () => AppRedux);
+
+

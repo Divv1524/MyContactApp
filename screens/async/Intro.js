@@ -5,19 +5,18 @@ import { useSelector } from 'react-redux'; // Import Redux hook
 
 const Intro = () => {
   const navigation = useNavigation();
-  const isLoggedIn = useSelector(state => state.auth.isLoggedIn); // Get login status from Redux
+  const user = useSelector(state => state.auth.user);
 
-  useEffect(() => {
-    const timeout = setTimeout(() => {
-      if (isLoggedIn) {
-        navigation.replace('Contact'); // Navigate to Contact if logged in
-      } else {
-        navigation.replace('Login'); // Navigate to Login if not
-      }
-    }, 3000);
-
-    return () => clearTimeout(timeout); // Cleanup on unmount
-  }, [isLoggedIn]);
+useEffect(() => {
+  const timeout = setTimeout(() => {
+    if (user) {
+      navigation.replace('Contact');
+    } else {
+      navigation.replace('Login');
+    }
+  }, 3000);
+  return () => clearTimeout(timeout);
+}, [user]);
 
   return (
     <View style={styles.container}>

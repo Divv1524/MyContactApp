@@ -10,7 +10,7 @@ import {
   Platform,
 } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
-import { addContact, updateContact } from '../../redux/action/action';
+import { addContact, updateContact } from '../../redux/slice/contactSlices';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import Contacts from 'react-native-contacts';
 

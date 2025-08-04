@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useDispatch } from 'react-redux';
-import { login } from '../../redux/action/authActions';
+import { login } from '../../redux/slice/authSlices';
 
 const Login = () => {
   const dispatch = useDispatch(); 
@@ -25,23 +25,20 @@ const Login = () => {
     input.current?.blur();
   };
 
-  const handleLogin = async () => {
-    const storedEmail = await AsyncStorage.getItem('EMAIL');
-    const storedPassword = await AsyncStorage.getItem('PASSWORD');
-
-    console.log('Stored Email:', storedEmail);
-    console.log('Stored Password:', storedPassword);
-    console.log('Entered Email:', email);
-    console.log('Entered Password:', password);
-
-    if (email.trim() === storedEmail && password.trim() === storedPassword) {
-      dispatch(login()); // 👈 Redux login
+  const handleLogin = () => {
+  if (!email || !password) {
+    Alert.alert('Please enter email and password');
+    return;
+  }
+  dispatch(login({ email, password }))
+    .unwrap()
+    .then(() => {
       Alert.alert('Welcome!');
       navigation.replace('Contact');
-    } else {
-      Alert.alert('Login Failed', 'Invalid credentials');
-    }
-  };
+    })
+    .catch((err) => Alert.alert('Login Failed', err));
+};
+
 
   return (
     <TouchableWithoutFeedback onPress={() => {
