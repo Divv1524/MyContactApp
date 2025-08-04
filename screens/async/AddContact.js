@@ -1,6 +1,16 @@
 import React, { useState } from 'react';
-import { View, TextInput, TouchableOpacity, Text, StyleSheet, Alert, PermissionsAndroid, Platform } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import {
+  View,
+  TextInput,
+  TouchableOpacity,
+  Text,
+  StyleSheet,
+  Alert,
+  PermissionsAndroid,
+  Platform,
+} from 'react-native';
+import { useDispatch, useSelector } from 'react-redux';
+import { addContact } from '../../redux/action';
 import { useNavigation } from '@react-navigation/native';
 import Contacts from 'react-native-contacts';
 
@@ -8,42 +18,42 @@ const AddContact = () => {
   const [name, setName] = useState('');
   const [mobile, setMobile] = useState('');
   const navigation = useNavigation();
+  const dispatch = useDispatch();
+  const contacts = useSelector((state) => state.contacts.contactList); // updated
 
   const requestPermission = async () => {
-  if (Platform.OS === 'android') {
-    const writeGranted = await PermissionsAndroid.request(
-      PermissionsAndroid.PERMISSIONS.WRITE_CONTACTS,
-      {
-        title: 'Contacts Permission',
-        message: 'App needs permission to save contacts to your device',
-        buttonNeutral: 'Ask Me Later',
-        buttonNegative: 'Cancel',
-        buttonPositive: 'OK',
-      }
-    );
+    if (Platform.OS === 'android') {
+      const writeGranted = await PermissionsAndroid.request(
+        PermissionsAndroid.PERMISSIONS.WRITE_CONTACTS,
+        {
+          title: 'Contacts Permission',
+          message: 'App needs permission to save contacts to your device',
+          buttonNeutral: 'Ask Me Later',
+          buttonNegative: 'Cancel',
+          buttonPositive: 'OK',
+        }
+      );
 
-    const readGranted = await PermissionsAndroid.request(
-      PermissionsAndroid.PERMISSIONS.READ_CONTACTS,
-      {
-        title: 'Read Contacts Permission',
-        message: 'App needs permission to read contacts from your device',
-        buttonNeutral: 'Ask Me Later',
-        buttonNegative: 'Cancel',
-        buttonPositive: 'OK',
-      }
-    );
+      const readGranted = await PermissionsAndroid.request(
+        PermissionsAndroid.PERMISSIONS.READ_CONTACTS,
+        {
+          title: 'Read Contacts Permission',
+          message: 'App needs permission to read contacts from your device',
+          buttonNeutral: 'Ask Me Later',
+          buttonNegative: 'Cancel',
+          buttonPositive: 'OK',
+        }
+      );
 
-    return (
-      writeGranted === PermissionsAndroid.RESULTS.GRANTED &&
-      readGranted === PermissionsAndroid.RESULTS.GRANTED
-    );
-  }
-  return true;
-};
-  const validateMobile = (number) => {
-    const mobileRegex = /^[0-9]{10}$/;
-    return mobileRegex.test(number);
+      return (
+        writeGranted === PermissionsAndroid.RESULTS.GRANTED &&
+        readGranted === PermissionsAndroid.RESULTS.GRANTED
+      );
+    }
+    return true;
   };
+
+  const validateMobile = (number) => /^[0-9]{10}$/.test(number);
 
   const saveContact = async () => {
     if (!name.trim() || !mobile.trim()) {
@@ -56,47 +66,38 @@ const AddContact = () => {
       return;
     }
 
+    const granted = await requestPermission();
+    if (!granted) {
+      Alert.alert('Permission Denied', 'Cannot save contact without permission');
+      return;
+    }
+
+    const duplicate = contacts.find((c) => c.mobile === mobile);
+    if (duplicate) {
+      Alert.alert('Duplicate Contact', 'A contact with this mobile number already exists.');
+      return;
+    }
+
+    const newContact = { name, mobile };
+
+    // Save in Redux
+    dispatch(addContact(newContact));
+    console.log('Contact added in Redux:', newContact);
+
+    // Save in device
     try {
-      const granted = await requestPermission();
-      if (!granted) {
-        console.log('WRITE_CONTACTS permission denied');
-        Alert.alert('Permission Denied', 'Cannot save contact without permission');
-        return;
-      }
-
-      const existingContacts = JSON.parse(await AsyncStorage.getItem('CONTACTS')) || [];
-      const duplicate = existingContacts.find((contact) => contact.mobile === mobile);
-      if (duplicate) {
-        Alert.alert('Duplicate Contact', 'A contact with this mobile number already exists.');
-        return;
-      }
-
-      const newContact = { name, mobile };
-      const updatedContacts = [...existingContacts, newContact];
-      await AsyncStorage.setItem('CONTACTS', JSON.stringify(updatedContacts));
-      console.log('Contact saved in app:', newContact);
-
-      // Save to device
-      const contactToSave = {
+      await Contacts.addContact({
         givenName: name,
         phoneNumbers: [{ label: 'mobile', number: mobile }],
-      };
+      });
 
-      await Contacts.addContact(contactToSave)
-        .then(() => {
-          console.log('✅ Contact saved to device');
-          Alert.alert('Success', 'Contact saved to device and app.');
-        })
-        .catch((err) => {
-          console.error('Device Contact Error:', err);
-          Alert.alert('Error', 'Failed to save contact to device.');
-        });
-
-      navigation.goBack();
-    } catch (error) {
-      console.log('Error saving contact:', error);
-      Alert.alert('Error', 'Failed to save contact');
+      console.log('✅ Saved to device');
+      Alert.alert('Success', 'Contact saved to device and app.');
+    } catch (err) {
+      console.warn('Failed to save to device', err);
     }
+
+    navigation.goBack();
   };
 
   return (

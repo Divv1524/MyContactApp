@@ -1,43 +1,29 @@
-import { View, Text, TouchableOpacity, StyleSheet, FlatList } from 'react-native';
-import React, { useState, useEffect, useContext } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useNavigation, useIsFocused } from '@react-navigation/native';
+import { View, Text, TouchableOpacity, StyleSheet, FlatList, Alert } from 'react-native';
+import React, { useContext } from 'react';
+import { useNavigation } from '@react-navigation/native';
+import { useSelector, useDispatch } from 'react-redux';
+import { deleteContact } from '../../redux/action';
 import { AuthContext } from '../../context/AuthContext';
-import Contacts from 'react-native-contacts'
-
+import Contacts from 'react-native-contacts';
 
 const Contact = () => {
   const navigation = useNavigation();
-  const isFocused = useIsFocused();
-  const [contactList, setContactList] = useState([]);
   const { logout } = useContext(AuthContext);
+  const dispatch = useDispatch();
+  const contactList = useSelector((state) => state.contacts.contactList); // updated
 
-  useEffect(() => {
-    getData();
-  }, [isFocused]);
-
-  const getData = async () => {
-    const contactsS = await AsyncStorage.getItem('CONTACTS');
-    const parsedContacts = contactsS ? JSON.parse(contactsS) : [];
-    console.log("Saved contacts:", parsedContacts);
-    setContactList(parsedContacts);
-  };
-
-  const deleteContact = async (index) => {
+  const handleDelete = async (index) => {
     const contactToDelete = contactList[index];
-    const updatedContacts = contactList.filter((item, ind) => ind !== index);
-    setContactList(updatedContacts);
-    await AsyncStorage.setItem('CONTACTS', JSON.stringify(updatedContacts));
 
-   // Delete from device contacts
+    dispatch(deleteContact(index));
+
     try {
       const deviceContacts = await Contacts.getAll();
 
-      const match = deviceContacts.find(c =>
-        c.givenName === contactToDelete.name &&
-        c.phoneNumbers.some(p =>
-          p.number.replace(/\s/g, '') === contactToDelete.mobile
-        )
+      const match = deviceContacts.find(
+        (c) =>
+          c.givenName === contactToDelete.name &&
+          c.phoneNumbers.some((p) => p.number.replace(/\s/g, '') === contactToDelete.mobile)
       );
 
       if (match) {
@@ -47,12 +33,11 @@ const Contact = () => {
     } catch (err) {
       console.warn('Error deleting contact from device:', err);
     }
-}
+  };
 
   const handleLogout = async () => {
     await logout();
-    // await AsyncStorage.setItem('LOGIN_STATUS', 'false');
-    navigation.navigate('Login'); // go to login screen
+    navigation.navigate('Login');
   };
 
   return (
@@ -66,7 +51,7 @@ const Contact = () => {
               <Text>{item.name.toUpperCase()}</Text>
               <Text style={{ marginLeft: 20 }}>{item.mobile}</Text>
             </View>
-            <TouchableOpacity style={styles.delbtn} onPress={() => deleteContact(index)}>
+            <TouchableOpacity style={styles.delbtn} onPress={() => handleDelete(index)}>
               <Text style={styles.text}>Delete</Text>
             </TouchableOpacity>
           </View>
@@ -88,7 +73,7 @@ export default Contact;
 
 const styles = StyleSheet.create({
   text: {
-    color: '#fff'
+    color: '#fff',
   },
   button: {
     width: 200,
@@ -99,7 +84,7 @@ const styles = StyleSheet.create({
     bottom: 20,
     right: 20,
     justifyContent: 'center',
-    alignItems: 'center'
+    alignItems: 'center',
   },
   logoutbutton: {
     width: 100,
@@ -110,7 +95,7 @@ const styles = StyleSheet.create({
     bottom: 20,
     left: 20,
     justifyContent: 'center',
-    alignItems: 'center'
+    alignItems: 'center',
   },
   list: {
     width: '90%',
@@ -122,7 +107,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingLeft: 20,
-    justifyContent: 'space-between'
+    justifyContent: 'space-between',
   },
   delbtn: {
     backgroundColor: 'red',
@@ -131,6 +116,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: 10,
-    marginRight: 20
-  }
+    marginRight: 20,
+  },
 });
