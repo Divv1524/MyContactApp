@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   TextInput,
@@ -10,8 +10,8 @@ import {
   Platform,
 } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
-import { addContact } from '../../redux/action';
-import { useNavigation } from '@react-navigation/native';
+import { addContact, updateContact } from '../../redux/action/action';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import Contacts from 'react-native-contacts';
 
 const AddContact = () => {
@@ -19,7 +19,17 @@ const AddContact = () => {
   const [mobile, setMobile] = useState('');
   const navigation = useNavigation();
   const dispatch = useDispatch();
-  const contacts = useSelector((state) => state.contacts.contactList); // updated
+  const contacts = useSelector((state) => state.contacts.contactList);
+  const route = useRoute();
+  const editingContact = route.params?.contact;
+  const editingIndex = route.params?.index;
+
+  useEffect(() => {
+    if (editingContact) {
+      setName(editingContact.name);
+      setMobile(editingContact.mobile);
+    }
+  }, []);
 
   const requestPermission = async () => {
     if (Platform.OS === 'android') {
@@ -28,8 +38,6 @@ const AddContact = () => {
         {
           title: 'Contacts Permission',
           message: 'App needs permission to save contacts to your device',
-          buttonNeutral: 'Ask Me Later',
-          buttonNegative: 'Cancel',
           buttonPositive: 'OK',
         }
       );
@@ -39,8 +47,6 @@ const AddContact = () => {
         {
           title: 'Read Contacts Permission',
           message: 'App needs permission to read contacts from your device',
-          buttonNeutral: 'Ask Me Later',
-          buttonNegative: 'Cancel',
           buttonPositive: 'OK',
         }
       );
@@ -72,7 +78,9 @@ const AddContact = () => {
       return;
     }
 
-    const duplicate = contacts.find((c) => c.mobile === mobile);
+    const duplicate = contacts.find(
+      (c, i) => c.mobile === mobile && i !== editingIndex
+    );
     if (duplicate) {
       Alert.alert('Duplicate Contact', 'A contact with this mobile number already exists.');
       return;
@@ -80,24 +88,36 @@ const AddContact = () => {
 
     const newContact = { name, mobile };
 
-    // Save in Redux
-    dispatch(addContact(newContact));
-    console.log('Contact added in Redux:', newContact);
+    if (editingContact) {
+      dispatch(updateContact(editingIndex, newContact));
+    } else {
+      dispatch(addContact(newContact));
+    }
 
-    // Save in device
     try {
+      const deviceContacts = await Contacts.getAll();
+
+      if (editingContact) {
+        const match = deviceContacts.find(
+          (c) =>
+            c.givenName === editingContact.name &&
+            c.phoneNumbers.some((p) => p.number.replace(/\s/g, '') === editingContact.mobile)
+        );
+        if (match) {
+          await Contacts.deleteContact(match);
+        }
+      }
+
       await Contacts.addContact({
         givenName: name,
         phoneNumbers: [{ label: 'mobile', number: mobile }],
       });
 
-      console.log('✅ Saved to device');
-      Alert.alert('Success', 'Contact saved to device and app.');
+      Alert.alert('Success', editingContact ? 'Contact updated' : 'Contact saved');
+      navigation.goBack();
     } catch (err) {
       console.warn('Failed to save to device', err);
     }
-
-    navigation.goBack();
   };
 
   return (
@@ -116,7 +136,9 @@ const AddContact = () => {
         keyboardType="number-pad"
       />
       <TouchableOpacity style={styles.button} onPress={saveContact}>
-        <Text style={styles.buttonText}>Save Contact</Text>
+        <Text style={styles.buttonText}>
+          {editingContact ? 'Update Contact' : 'Save Contact'}
+        </Text>
       </TouchableOpacity>
     </View>
   );

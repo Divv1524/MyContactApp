@@ -1,81 +1,89 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import React, { useContext, useState, useRef } from 'react';
-import { View, Text, TextInput, StyleSheet, TouchableOpacity, Alert, TouchableWithoutFeedback, Keyboard } from 'react-native';
+import React, { useState, useRef } from 'react';
+import {
+  View,
+  Text,
+  TextInput,
+  StyleSheet,
+  TouchableOpacity,
+  Alert,
+  TouchableWithoutFeedback,
+  Keyboard,
+} from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { AuthContext } from '../../context/AuthContext';
-
-
+import { useDispatch } from 'react-redux';
+import { login } from '../../redux/action/authActions';
 
 const Login = () => {
-    const { login } = useContext(AuthContext);
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const navigation = useNavigation();
-    const input = useRef();
+  const dispatch = useDispatch(); 
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const navigation = useNavigation();
+  const input = useRef();
 
-    const dismissFocus = () => {
-        input.current?.blur();
-        input.current?.blur();
-    };
+  const dismissFocus = () => {
+    input.current?.blur();
+  };
 
+  const handleLogin = async () => {
+    const storedEmail = await AsyncStorage.getItem('EMAIL');
+    const storedPassword = await AsyncStorage.getItem('PASSWORD');
 
-    const handleLogin = async () => {
-        const storedEmail = await AsyncStorage.getItem('EMAIL');
-        const storedPassword = await AsyncStorage.getItem('PASSWORD');
-        console.log('Stored Email:', storedEmail);
-        console.log('Stored Password:', storedPassword);
-        console.log('Entered Email:', email);
-        console.log('Entered Password:', password);
-        if (email.trim() === storedEmail && password.trim() === storedPassword) {
-            await login();
-            // await AsyncStorage.setItem('LOGIN_STATUS', 'true');
-            Alert.alert('Welcome!');
-            navigation.replace('Contact');
-        } else {
-            Alert.alert('Login Failed', 'Invalid credentials');
-        }
-    };
+    console.log('Stored Email:', storedEmail);
+    console.log('Stored Password:', storedPassword);
+    console.log('Entered Email:', email);
+    console.log('Entered Password:', password);
 
-    return (
-        <TouchableWithoutFeedback onPress={() => {
-            dismissFocus();
-            Keyboard.dismiss();  // Also hides keyboard
-        }}>
-            <View style={styles.container}>
-                <Text style={styles.title}>Login</Text>
+    if (email.trim() === storedEmail && password.trim() === storedPassword) {
+      dispatch(login()); // 👈 Redux login
+      Alert.alert('Welcome!');
+      navigation.replace('Contact');
+    } else {
+      Alert.alert('Login Failed', 'Invalid credentials');
+    }
+  };
 
-                <TextInput
-                    style={styles.input}
-                    placeholder="Enter email"
-                    keyboardType="email-address"
-                    value={email}
-                    onChangeText={txt => setEmail(txt)}
-                    ref={dismissFocus}
-                />
+  return (
+    <TouchableWithoutFeedback onPress={() => {
+      dismissFocus();
+      Keyboard.dismiss();
+    }}>
+      <View style={styles.container}>
+        <Text style={styles.title}>Login</Text>
 
-                <TextInput
-                    style={styles.input}
-                    placeholder="Enter password"
-                    secureTextEntry
-                    value={password}
-                    onChangeText={txt => setPassword(txt)}
-                    ref={dismissFocus}
-                />
+        <TextInput
+          style={styles.input}
+          placeholder="Enter email"
+          keyboardType="email-address"
+          value={email}
+          onChangeText={txt => setEmail(txt)}
+          ref={input}
+        />
 
-                <TouchableOpacity style={styles.button} onPress={() => { handleLogin() }}>
-                    <Text style={styles.text}>Login</Text>
-                </TouchableOpacity>
+        <TextInput
+          style={styles.input}
+          placeholder="Enter password"
+          secureTextEntry
+          value={password}
+          onChangeText={txt => setPassword(txt)}
+          ref={input}
+        />
 
-                <TouchableOpacity onPress={() => navigation.navigate('SignUp')}>
-                    <Text style={{ marginTop: 20, color: 'blue' }}>Don't have an account? Sign Up</Text>
-                </TouchableOpacity>
-            </View>
-        </TouchableWithoutFeedback>
-    );
+        <TouchableOpacity style={styles.button} onPress={handleLogin}>
+          <Text style={styles.text}>Login</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity onPress={() => navigation.navigate('SignUp')}>
+          <Text style={{ marginTop: 20, color: 'blue' }}>
+            Don't have an account? Sign Up
+          </Text>
+        </TouchableOpacity>
+      </View>
+    </TouchableWithoutFeedback>
+  );
 };
 
 export default Login;
-
 
 const styles = StyleSheet.create({
     container: {
@@ -118,5 +126,3 @@ const styles = StyleSheet.create({
 
     }
 });
-
-

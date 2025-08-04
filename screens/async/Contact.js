@@ -1,31 +1,27 @@
 import { View, Text, TouchableOpacity, StyleSheet, FlatList, Alert } from 'react-native';
-import React, { useContext } from 'react';
+import React from 'react';
 import { useNavigation } from '@react-navigation/native';
 import { useSelector, useDispatch } from 'react-redux';
-import { deleteContact } from '../../redux/action';
-import { AuthContext } from '../../context/AuthContext';
+import { deleteContact } from '../../redux/action/action';
+import { logout } from '../../redux/action/authActions';
 import Contacts from 'react-native-contacts';
 
 const Contact = () => {
   const navigation = useNavigation();
-  const { logout } = useContext(AuthContext);
   const dispatch = useDispatch();
-  const contactList = useSelector((state) => state.contacts.contactList); // updated
+  const contactList = useSelector((state) => state.contacts.contactList);
 
   const handleDelete = async (index) => {
     const contactToDelete = contactList[index];
-
     dispatch(deleteContact(index));
 
     try {
       const deviceContacts = await Contacts.getAll();
-
       const match = deviceContacts.find(
         (c) =>
           c.givenName === contactToDelete.name &&
           c.phoneNumbers.some((p) => p.number.replace(/\s/g, '') === contactToDelete.mobile)
       );
-
       if (match) {
         await Contacts.deleteContact(match);
         console.log('Contact deleted from device');
@@ -35,8 +31,8 @@ const Contact = () => {
     }
   };
 
-  const handleLogout = async () => {
-    await logout();
+  const handleLogout = () => {
+    dispatch(logout());
     navigation.navigate('Login');
   };
 
@@ -47,13 +43,29 @@ const Contact = () => {
         keyExtractor={(item, index) => index.toString()}
         renderItem={({ item, index }) => (
           <View style={styles.list}>
-            <View style={{ flexDirection: 'row' }}>
-              <Text>{item.name.toUpperCase()}</Text>
-              <Text style={{ marginLeft: 20 }}>{item.mobile}</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <Text>{String(item?.name || '').toUpperCase()}</Text>
+              <Text style={{ marginLeft: 20 }}>{String(item?.mobile || '')}</Text>
             </View>
-            <TouchableOpacity style={styles.delbtn} onPress={() => handleDelete(index)}>
-              <Text style={styles.text}>Delete</Text>
-            </TouchableOpacity>
+
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <TouchableOpacity
+                style={styles.editbtn}
+                onPress={() => navigation.navigate('AddContact', {
+                  contact: item,
+                  index,
+                })}
+              >
+                <Text style={styles.text}>Edit</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.delbtn}
+                onPress={() => handleDelete(index)}
+              >
+                <Text style={styles.text}>Delete</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         )}
       />
@@ -99,7 +111,7 @@ const styles = StyleSheet.create({
   },
   list: {
     width: '90%',
-    height: 50,
+    minHeight: 50,
     borderWidth: 1,
     alignSelf: 'center',
     borderRadius: 10,
@@ -108,14 +120,21 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingLeft: 20,
     justifyContent: 'space-between',
+    paddingRight: 10,
   },
   delbtn: {
     backgroundColor: 'red',
-    paddingLeft: 10,
-    paddingRight: 10,
+    paddingHorizontal: 10,
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: 10,
-    marginRight: 20,
+    marginLeft: 10,
+  },
+  editbtn: {
+    backgroundColor: 'green',
+    paddingHorizontal: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 10,
   },
 });

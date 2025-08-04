@@ -10,7 +10,8 @@ import App from './App';
 import { name as appName } from './app.json';
 
 const AppRedux = () => (
-  <Provider store={store}>
+    
+  <Provider store={store}> // Wraps your entire app with Redux store access.
     <PersistGate loading={null} persistor={persistor}>
       <App />
     </PersistGate>
