@@ -1,5 +1,3 @@
-// src/redux/slices/authSlice.js
-
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -10,14 +8,17 @@ const initialState = {
 };
 
 // Async Thunk: Sign Up
+
 export const signUp = createAsyncThunk(
   'auth/signUp',
   async ({ email, password, name }, { rejectWithValue }) => {
     try {
+        ////Get existing users from AsyncStorage (or empty array if none)
       const usersData = await AsyncStorage.getItem('registeredUsers');
       const users = usersData ? JSON.parse(usersData) : [];
 
       const userExists = users.some(user => user.email.toLowerCase() === email.toLowerCase());
+      // Check if user with same email already exists
       if (userExists) {
         return rejectWithValue('An account with this email already exists');
       }
@@ -30,6 +31,7 @@ export const signUp = createAsyncThunk(
         createdAt: new Date().toISOString(),
       };
 
+      // Save all users including this new one back to storage
       await AsyncStorage.setItem('registeredUsers', JSON.stringify([...users, newUser]));
 
       const { password: _, ...userWithoutPassword } = newUser;
@@ -49,7 +51,7 @@ export const login = createAsyncThunk(
       const users = usersData ? JSON.parse(usersData) : [];
 
       const found = users.find(u => u.email.toLowerCase() === email.toLowerCase());
-
+      //Check if user exists and password matches
       if (!found) return rejectWithValue('No account found with this email');
       if (found.password !== password) return rejectWithValue('Incorrect password');
 
@@ -62,6 +64,7 @@ export const login = createAsyncThunk(
 );
 
 // Async Thunk: Sign Out
+//Just clears the user from Redux state (No need to remove anything from storage here)
 export const logout = createAsyncThunk('auth/signOut', async () => {
   return null;
 });
@@ -78,15 +81,15 @@ const authSlice = createSlice({
     builder
       .addCase(signUp.pending, state => {
         state.loading = true;
-        state.error = null;
+        state.error = null; //Show a loading spinner while signup is in progress
       })
       .addCase(signUp.fulfilled, (state, action) => {
         state.user = action.payload;
-        state.loading = false;
+        state.loading = false; //Signup success → set the user and turn off loading
       })
       .addCase(signUp.rejected, (state, action) => {
         state.error = action.payload;
-        state.loading = false;
+        state.loading = false; //Signup failed → set the error and stop the spinner
       })
       .addCase(login.pending, state => {
         state.loading = true;

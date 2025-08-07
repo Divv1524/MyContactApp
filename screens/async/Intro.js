@@ -15,8 +15,9 @@ useEffect(() => {
       navigation.replace('Login');
     }
   }, 3000);
+  // Clean up the timer when component unmounts
   return () => clearTimeout(timeout);
-}, [user]);
+}, [user]);  // Rerun this effect if user state changes
 
   return (
     <View style={styles.container}>

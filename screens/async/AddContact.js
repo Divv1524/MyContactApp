@@ -19,12 +19,14 @@ const AddContact = () => {
   const [mobile, setMobile] = useState('');
   const navigation = useNavigation();
   const dispatch = useDispatch();
-  const contacts = useSelector((state) => state.contacts.contactList);
+  const contacts = useSelector((state) => state.contacts.contactList);  //This line reads data from your Redux store using the useSelector hook.
   const route = useRoute();
   const editingContact = route.params?.contact;
   const editingIndex = route.params?.index;
 
+  //AddContact screen is used for both:new or edit
   useEffect(() => {
+    //Are we editing a contact? → then pre-fill the form ,Otherwise → leave form blank
     if (editingContact) {
       setName(editingContact.name);
       setMobile(editingContact.mobile);
@@ -98,12 +100,14 @@ const AddContact = () => {
       const deviceContacts = await Contacts.getAll();
 
       if (editingContact) {
+        //This finds a contact where:givenName matches the old contact's name, One of the phone numbers matches the old contact’s number
         const match = deviceContacts.find(
           (c) =>
             c.givenName === editingContact.name &&
             c.phoneNumbers.some((p) => p.number.replace(/\s/g, '') === editingContact.mobile)
         );
         if (match) {
+          //if match then delete contact before saving it
           await Contacts.deleteContact(match);
         }
       }

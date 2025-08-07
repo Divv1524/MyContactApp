@@ -12,6 +12,7 @@ const contactSlice = createSlice({
     addContact: (state, action) => {
       state.contactList.push(action.payload);
     },
+    //action.payload is the index of the contact to delete Uses splice() to remove that contact from the array
     deleteContact: (state, action) => {
       state.contactList.splice(action.payload, 1);
     },

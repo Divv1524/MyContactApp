@@ -8,6 +8,7 @@ import Contact from './screens/async/Contact';
 import AddContact from './screens/async/AddContact';
 import Intro from './screens/async/Intro';
 import SignUp from './screens/async/Signup';
+import News from './screens/async/News';
 
 const Stack = createNativeStackNavigator();
 
@@ -20,6 +21,7 @@ const App = () => {
         <Stack.Screen name="Login" component={Login} options={{ headerShown: false }} />
         <Stack.Screen name="Contact" component={Contact} options={{ headerShown: false }} />
         <Stack.Screen name="AddContact" component={AddContact} options={{ headerShown: false }} />
+        <Stack.Screen name="News" component={News} />
       </Stack.Navigator>
     </NavigationContainer>
   );

@@ -30,12 +30,13 @@ const Login = () => {
     Alert.alert('Please enter email and password');
     return;
   }
+  //unwrap() is a helper function provided by Redux Toolkit (RTK) to convert the thunk result into a normal JavaScript Promise.
   dispatch(login({ email, password }))
     .unwrap()
     .then(() => {
       Alert.alert('Welcome!');
       navigation.replace('Contact');
-    })
+    }) //unwrap() rejects with the error, so .catch(err) is called
     .catch((err) => Alert.alert('Login Failed', err));
 };
 

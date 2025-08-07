@@ -24,6 +24,7 @@ const SignUp = () => {
       return;
     }
 
+    // Dispatch signUp thunk to handle async API logic
     dispatch(
       signUp({
         name: name.trim(),

@@ -78,6 +78,12 @@ const Contact = () => {
       <TouchableOpacity style={styles.logoutbutton} onPress={handleLogout}>
         <Text style={styles.text}>Log Out</Text>
       </TouchableOpacity>
+
+      <TouchableOpacity  style={styles.newsbtn}onPress={() => navigation.navigate('News')}>
+        <Text style={styles.text}>Tesla News</Text>
+      </TouchableOpacity>
+
+
     </View>
   );
 };
@@ -138,4 +144,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderRadius: 10,
   },
+  newsbtn:{
+    width: 100,
+    height: 50,
+    color:'red',
+    borderRadius: 10,
+    backgroundColor: 'blue',
+    margin:110,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding:10
+
+
+  }
 });
