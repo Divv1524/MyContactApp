@@ -83,6 +83,11 @@ const Contact = () => {
         <Text style={styles.text}>Tesla News</Text>
       </TouchableOpacity>
 
+      <TouchableOpacity  style={styles.locbtn}onPress={() => navigation.navigate('LocationScreen')}>
+        <Text style={styles.text}>Location</Text>
+      </TouchableOpacity>
+
+
 
     </View>
   );
@@ -150,11 +155,25 @@ const styles = StyleSheet.create({
     color:'red',
     borderRadius: 10,
     backgroundColor: 'blue',
-    margin:110,
+    marginLeft:30,
+    marginBottom:20,
     justifyContent: 'center',
     alignItems: 'center',
+    position:'relative',
     padding:10
-
+  },
+  locbtn:{
+    width: 100,
+    height: 50,
+    color:'red',
+    borderRadius: 10,
+    backgroundColor: 'brown',
+    marginLeft:30,
+    marginBottom:80,
+    justifyContent: 'center',
+    position: 'relative',
+    alignItems: 'center',
+    padding:10
 
   }
 });

@@ -6,11 +6,10 @@ const initialState = {
   loading: false,
   error: null,
   page: 1,
-  pageSize: 10,
+  pageSize:10,
   hasMore: true,
   fromDate: '',
   toDate: '',
-  isLoadMore: false,
 };
 
 // Create slice
@@ -27,16 +26,11 @@ const newsSlice = createSlice({
     // On success, append new articles
     fetchNewsSuccess: (state, action) => {
       const { articles, hasMore } = action.payload;
-      if (state.isLoadMore) {
-    state.articles = [...state.articles, ...articles];
-  } else {
-    state.articles = articles;
-  }
 
       // Append if not first page, else replace
+      state.articles = state.page === 1 ? articles : [...state.articles, ...articles];
       state.hasMore = hasMore;
       state.loading = false;
-      state.isLoadMore = false;
     },
 
     // On failure
@@ -49,7 +43,6 @@ const newsSlice = createSlice({
     loadMoreNews: (state) => {
       if (state.hasMore) {
         state.page += 1;
-        state.isLoadMore = true;
       }
     },
 
@@ -60,7 +53,6 @@ const newsSlice = createSlice({
       state.hasMore = true;
       state.loading = false;
       state.error = null;
-      state.isLoadMore = false;
     },
 
     // Set date filter values

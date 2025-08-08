@@ -9,6 +9,7 @@ import AddContact from './screens/async/AddContact';
 import Intro from './screens/async/Intro';
 import SignUp from './screens/async/Signup';
 import News from './screens/async/News';
+import LocationScreen from './screens/async/LocationScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -22,6 +23,7 @@ const App = () => {
         <Stack.Screen name="Contact" component={Contact} options={{ headerShown: false }} />
         <Stack.Screen name="AddContact" component={AddContact} options={{ headerShown: false }} />
         <Stack.Screen name="News" component={News} />
+        <Stack.Screen name="LocationScreen" component={LocationScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );
