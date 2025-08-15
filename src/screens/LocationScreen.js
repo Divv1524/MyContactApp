@@ -20,38 +20,39 @@ import {
   clearLocationError,
 } from '../redux/slice/locationSlice';
 import LocationService from '../services/LocationService';
+import MapView, { Marker } from 'react-native-maps';
 
-const SimpleMap = ({ location, style }) => {
-  if (!location) {
-    return (
-      <View style={[style, styles.mapPlaceholder]}>
-        <Text style={styles.mapPlaceholderText}>
-          📡 Waiting for GPS fix...
-        </Text>
-      </View>
-    );
-  }
+// const SimpleMap = ({ location, style }) => {
+//   if (!location) {
+//     return (
+//       <View style={[style, styles.mapPlaceholder]}>
+//         <Text style={styles.mapPlaceholderText}>
+//           📡 Waiting for GPS fix...
+//         </Text>
+//       </View>
+//     );
+//   }
 
-  return (
-    <View style={[style, styles.mapContainer]}>
-      <View style={styles.mapContent}>
-        <View style={styles.pin} />
-        <Text style={styles.coordinatesText}>
-          Latitude: {location.latitude.toFixed(6)}
-        </Text>
-        <Text style={styles.coordinatesText}>
-          Longitude: {location.longitude.toFixed(6)}
-        </Text>
-        <Text style={styles.accuracyText}>
-          Accuracy: ±{location.accuracy.toFixed(2)} m
-        </Text>
-        <Text style={styles.timestampText}>
-          Last update: {new Date(location.timestamp).toLocaleTimeString()}
-        </Text>
-      </View>
-    </View>
-  );
-};
+//   return (
+//     <View style={[style, styles.mapContainer]}>
+//       <View style={styles.mapContent}>
+//         <View style={styles.pin} />
+//         <Text style={styles.coordinatesText}>
+//           Latitude: {location.latitude.toFixed(6)}
+//         </Text>
+//         <Text style={styles.coordinatesText}>
+//           Longitude: {location.longitude.toFixed(6)}
+//         </Text>
+//         <Text style={styles.accuracyText}>
+//           Accuracy: ±{location.accuracy.toFixed(2)} m
+//         </Text>
+//         <Text style={styles.timestampText}>
+//           Last update: {new Date(location.timestamp).toLocaleTimeString()}
+//         </Text>
+//       </View>
+//     </View>
+//   );
+// };
 
 async function requestPermissions() {
   if (Platform.OS === 'android') {
@@ -162,7 +163,60 @@ const LocationScreen = () => {
         )}
       </View>
 
-      <SimpleMap location={currentLocation} style={styles.map} />
+      {/* <SimpleMap location={currentLocation} style={styles.map} /> */}
+
+      <View style={styles.mapWrapper}>
+        {currentLocation ? (
+          <MapView
+            style={styles.map}
+            provider={MapView.PROVIDER_GOOGLE}
+            initialRegion={{
+              latitude: currentLocation.latitude,
+              longitude: currentLocation.longitude,
+              latitudeDelta: 0.005,
+              longitudeDelta: 0.005,
+            }}
+            region={{
+              latitude: currentLocation.latitude,
+              longitude: currentLocation.longitude,
+              latitudeDelta: 0.005,
+              longitudeDelta: 0.005,
+            }}
+            showsUserLocation={true}
+            followsUserLocation={true}
+          >
+            <Marker
+              coordinate={{
+                latitude: currentLocation.latitude,
+                longitude: currentLocation.longitude,
+              }}
+              title="You are here"
+            />
+          </MapView>
+        ) : (
+          <View style={[styles.map, styles.mapPlaceholder]}>
+            <Text style={styles.mapPlaceholderText}>📡 Waiting for GPS fix...</Text>
+          </View>
+        )}
+
+        {/* Overlay pin & info */}
+        {currentLocation && (
+          <View style={styles.overlay}>
+            <Text style={styles.coordinatesText}>
+              Latitude: {currentLocation.latitude.toFixed(6)}
+            </Text>
+            <Text style={styles.coordinatesText}>
+              Longitude: {currentLocation.longitude.toFixed(6)}
+            </Text>
+            <Text style={styles.accuracyText}>
+              Accuracy: ±{currentLocation.accuracy.toFixed(2)} m
+            </Text>
+            <Text style={styles.timestampText}>
+              Last update: {new Date(currentLocation.timestamp).toLocaleTimeString()}
+            </Text>
+          </View>
+        )}
+      </View>
 
       <View style={styles.controlsContainer}>
         <View style={styles.buttonRow}>
@@ -219,7 +273,8 @@ const styles = StyleSheet.create({
   title: { fontSize: 22, fontWeight: 'bold', color: '#FFFFFF', textAlign: 'center' },
   errorContainer: { backgroundColor: '#DC2626', padding: 10, marginTop: 10, borderRadius: 5 },
   errorText: { color: 'white', textAlign: 'center' },
-  map: { flex: 1, margin: 20, borderRadius: 12 },
+  mapWrapper: { flex: 1, margin: 20, borderRadius: 12, overflow: 'hidden' },
+  map: { flex: 1 },
   mapContainer: {
     backgroundColor: '#E0F2FE',
     justifyContent: 'center',
@@ -238,6 +293,13 @@ const styles = StyleSheet.create({
   },
   mapPlaceholderText: { fontSize: 16, color: '#6B7280', fontStyle: 'italic' },
   mapContent: { alignItems: 'center' },
+  overlay: {
+    position: 'absolute',
+    top: '40%',
+    left: '50%',
+    transform: [{ translateX: -50 }, { translateY: -50 }],
+    alignItems: 'center',
+  },
   pin: {
     width: 22,
     height: 22,
@@ -252,7 +314,7 @@ const styles = StyleSheet.create({
     shadowRadius: 3.84,
     elevation: 4,
   },
-  coordinatesText: { fontSize: 15, fontWeight: 'bold', color: '#1E40AF', marginVertical: 2 },
+  coordinatesText: { fontSize: 15, fontWeight: 'bold', color: 'white', marginVertical: 2 },
   accuracyText: { fontSize: 14, color: '#059669', marginVertical: 2 },
   timestampText: { fontSize: 12, color: '#6B7280', marginTop: 5 },
   controlsContainer: { padding: 20, backgroundColor: 'white', borderTopWidth: 1, borderTopColor: '#E5E7EB' },
