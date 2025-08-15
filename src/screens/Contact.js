@@ -2,10 +2,12 @@ import { View, Text, TouchableOpacity, StyleSheet, FlatList, Alert } from 'react
 import React from 'react';
 import { useNavigation } from '@react-navigation/native';
 import { useSelector, useDispatch } from 'react-redux';
-import { deleteContact } from '../../redux/slice/contactSlices';
+
 
 import Contacts from 'react-native-contacts';
-import { logout } from '../../redux/slice/authSlices';
+
+import { deleteContact } from '../redux/slice/contactSlices';
+import { logout } from '../redux/slice/authSlices';
 
 const Contact = () => {
   const navigation = useNavigation();

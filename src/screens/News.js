@@ -14,12 +14,7 @@ import {
 } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
 import moment from 'moment';
-import {
-  fetchNewsRequest,
-  loadMoreNews,
-  resetNews,
-  setDateFilter,
-} from '../../redux/slice/newsSlices';
+import { fetchNewsRequest, loadMoreNews, resetNews, setDateFilter } from '../redux/slice/newsSlices';
 
 const News = () => {
   const dispatch = useDispatch();

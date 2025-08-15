@@ -2,14 +2,13 @@
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-
-import Login from './screens/async/Login';
-import Contact from './screens/async/Contact';
-import AddContact from './screens/async/AddContact';
-import Intro from './screens/async/Intro';
-import SignUp from './screens/async/Signup';
-import News from './screens/async/News';
-import LocationScreen from './screens/async/LocationScreen';
+import Intro from './src/screens/Intro';
+import SignUp from './src/screens/Signup';
+import Login from './src/screens/Login';
+import Contact from './src/screens/Contact';
+import AddContact from './src/screens/AddContact';
+import News from './src/screens/News';
+import LocationScreen from './src/screens/LocationScreen';
 
 const Stack = createNativeStackNavigator();
 

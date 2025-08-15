@@ -1,3 +1,4 @@
+// src/redux/store.js
 import { configureStore, combineReducers } from '@reduxjs/toolkit';
 import { persistStore, persistReducer } from 'redux-persist';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -7,6 +8,7 @@ import { FLUSH, REHYDRATE, PAUSE, PERSIST, PURGE, REGISTER } from 'redux-persist
 import authReducer from './slice/authSlices';
 import contactReducer from './slice/contactSlices';
 import newsReducer from './slice/newsSlices';
+import locationReducer from './slice/locationSlice';
 
 
 // Saga root
@@ -21,13 +23,14 @@ const rootReducer = combineReducers({
   auth: authReducer,
   contacts: contactReducer,
   news: newsReducer,
+  location: locationReducer,
 });
 
 //Configure persist
 const persistConfig = {
   key: 'root',
   storage: AsyncStorage,
-  whitelist: ['auth', 'contacts'], // persist only these (NOT news)
+  whitelist: ['auth', 'contacts','location'], // persist only these (NOT news)
 };
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);
@@ -37,7 +40,7 @@ export const store = configureStore({
   reducer: persistedReducer,
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
-      thunk: false, // disable thunk
+      thunk: true, // disable thunk
       serializableCheck: {
         ignoredActions: [FLUSH, REHYDRATE, PAUSE, PERSIST, PURGE, REGISTER],
       },

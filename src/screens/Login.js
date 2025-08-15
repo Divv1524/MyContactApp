@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useDispatch } from 'react-redux';
-import { login } from '../../redux/slice/authSlices';
+import { login } from '../redux/slice/authSlices';
 
 const Login = () => {
   const dispatch = useDispatch(); 

@@ -9,7 +9,8 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useDispatch } from 'react-redux';
-import { signUp } from '../../redux/slice/authSlices';
+import { signUp } from '../redux/slice/authSlices';
+
 
 const SignUp = () => {
   const [name, setName] = useState('');
