@@ -8,6 +8,8 @@ import {
   ActivityIndicator,
   TouchableOpacity,
   Dimensions,
+  PermissionsAndroid,
+  Platform
 } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
 import {
@@ -51,6 +53,24 @@ const SimpleMap = ({ location, style }) => {
   );
 };
 
+async function requestPermissions() {
+  if (Platform.OS === 'android') {
+    try {
+      const permissions = [
+        PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+        PermissionsAndroid.PERMISSIONS.ACCESS_COARSE_LOCATION,
+      ];
+      if (Platform.Version >= 33) {
+        permissions.push(PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS);
+      }
+      await PermissionsAndroid.requestMultiple(permissions);
+    } catch (err) {
+      console.warn('Permission request error:', err);
+    }
+  }
+}
+
+
 const LocationScreen = () => {
   const dispatch = useDispatch();
   const { currentLocation, isTracking, error, loading } = useSelector(
@@ -59,6 +79,7 @@ const LocationScreen = () => {
   const unsubscribeRef = useRef(null);
 
   useEffect(() => {
+    requestPermissions().then(() => {
     const unsubscribe = LocationService.subscribeToLocationUpdates((location) => {
       console.log('Location update received:', location);
       dispatch(setCurrentLocation(location));
@@ -66,6 +87,7 @@ const LocationScreen = () => {
 
     unsubscribeRef.current = unsubscribe;
     handleGetCurrentLocation();
+  });
 
     return () => {
       if (unsubscribeRef.current) {

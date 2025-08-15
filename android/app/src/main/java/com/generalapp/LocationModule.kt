@@ -1,15 +1,20 @@
 package com.generalapp
 
 import android.Manifest
+import android.app.NotificationChannel
+import android.app.NotificationManager
 import android.content.Context
 import android.content.pm.PackageManager
 import android.location.Location
 import android.location.LocationListener
 import android.location.LocationManager
+import android.os.Build
 import android.os.Bundle
 import android.os.Looper
 import android.util.Log
 import androidx.core.app.ActivityCompat
+import androidx.core.app.NotificationCompat
+import androidx.core.app.NotificationManagerCompat
 import com.facebook.react.bridge.*
 import com.facebook.react.modules.core.DeviceEventManagerModule
 
@@ -18,8 +23,10 @@ class NativeLocationModule(reactContext: ReactApplicationContext) :
 
     private var locationManager: LocationManager? = null
     private var lastKnownLocation: Location? = null
-    private val MIN_DISTANCE_CHANGE_FOR_UPDATES = 50f // meters
+    private val MIN_DISTANCE_CHANGE_FOR_UPDATES = 1f // meters
+    private val NOTIFICATION_ID = 101
     private val MIN_TIME_BW_UPDATES = 10000L // ms
+    private val CHANNEL_ID = "location_channel_id"
 
     companion object {
         const val NAME = "NativeLocationModule"
@@ -31,6 +38,7 @@ class NativeLocationModule(reactContext: ReactApplicationContext) :
 
     init {
         setupLocationManager()
+        createNotificationChannel()
     }
 
     private fun setupLocationManager() {
@@ -83,6 +91,7 @@ class NativeLocationModule(reactContext: ReactApplicationContext) :
             }
 
             getLastKnownLocation()
+            sendOrUpdateLocationNotification(lastKnownLocation)
             promise.resolve("Location updates started")
             Log.d(TAG, "Location updates started")
 
@@ -98,6 +107,7 @@ class NativeLocationModule(reactContext: ReactApplicationContext) :
     fun stopLocationUpdates(promise: Promise) {
         try {
             locationManager?.removeUpdates(this)
+            NotificationManagerCompat.from(reactApplicationContext).cancel(NOTIFICATION_ID)
             promise.resolve("Location updates stopped")
             Log.d(TAG, "Location updates stopped")
         } catch (e: Exception) {
@@ -152,6 +162,41 @@ class NativeLocationModule(reactContext: ReactApplicationContext) :
         }
     }
 
+    private fun sendOrUpdateLocationNotification(location: Location?) {
+        val contentText = if (location != null) {
+            "Lat: ${location.latitude}, Lon: ${location.longitude}"
+        } else {
+            "Waiting for location..."
+        }
+
+        val notification = NotificationCompat.Builder(reactApplicationContext, CHANNEL_ID)
+            .setSmallIcon(android.R.drawable.ic_menu_mylocation)
+            .setContentTitle("Live Location Tracking")
+            .setContentText(contentText)
+            .setPriority(NotificationCompat.PRIORITY_LOW)
+            .setOngoing(true)
+            .build()
+
+        with(NotificationManagerCompat.from(reactApplicationContext)) {
+            notify(NOTIFICATION_ID, notification)
+        }
+    }
+
+
+    private fun createNotificationChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val name = "Location Updates"
+            val descriptionText = "Channel for location update notifications"
+            val importance = NotificationManager.IMPORTANCE_HIGH
+            val channel = NotificationChannel(CHANNEL_ID, name, importance).apply {
+                description = descriptionText
+            }
+            val notificationManager: NotificationManager =
+                reactApplicationContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            notificationManager.createNotificationChannel(channel)
+        }
+    }
+
     private fun locationToMap(location: Location): WritableMap {
         return Arguments.createMap().apply {
             putDouble("latitude", location.latitude)
@@ -174,6 +219,7 @@ class NativeLocationModule(reactContext: ReactApplicationContext) :
         if (shouldUpdateLocation(location)) {
             lastKnownLocation = location
             sendLocationUpdate(location)
+            sendOrUpdateLocationNotification(location)
         }
     }
 
