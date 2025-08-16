@@ -72,36 +72,54 @@ const SignUp = () => {
     });
   };
 
-  const handleSignUp = async() => {
+  const handleSignUp = async () => {
     if (!name || !email || !password) {
       Alert.alert('Error', 'Please fill all fields');
       return;
     }
-    try {
-    // Save profile image permanently with key = email
-     if (profileImage) {
-      await AsyncStorage.setItem(`profile_${email.trim().toLowerCase()}`, profileImage);
+
+    const nameRegex = /^[A-Za-z\s]+$/;
+    if (!nameRegex.test(name.trim())) {
+      Alert.alert('Error', 'Name should only contain letters and spaces');
+      return;
     }
 
-    // Dispatch signUp thunk to handle async API logic
-    dispatch(
-      signUp({
-        name: name.trim(),
-        email: email.trim().toLowerCase(),
-        password: password.trim(),
-        profileImage
-      })
-    )
-      .unwrap()
-      .then(() => {
-        Alert.alert('Success', 'Account created successfully');
-        navigation.navigate('Login');
-      })
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email.trim().toLowerCase())) {
+      Alert.alert('Error', 'Please enter a valid email address');
+      return;
     }
-      catch(err) {
-        Alert.alert('Signup Failed', err);
+
+    if (password.trim().length < 6) {
+      Alert.alert('Error', 'Password must be at least 6 characters long');
+      return;
+    }
+
+    try {
+      // Save profile image permanently with key = email
+      if (profileImage) {
+        await AsyncStorage.setItem(`profile_${email.trim().toLowerCase()}`, profileImage);
       }
-    };
+
+      // Dispatch signUp thunk to handle async API logic
+      dispatch(
+        signUp({
+          name: name.trim(),
+          email: email.trim().toLowerCase(),
+          password: password.trim(),
+          profileImage
+        })
+      )
+        .unwrap()
+        .then(() => {
+          Alert.alert('Success', 'Account created successfully');
+          navigation.navigate('Login');
+        })
+    }
+    catch (err) {
+      Alert.alert('Signup Failed', err);
+    }
+  };
 
 
   return (
