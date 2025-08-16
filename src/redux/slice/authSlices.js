@@ -11,7 +11,7 @@ const initialState = {
 
 export const signUp = createAsyncThunk(
   'auth/signUp',
-  async ({ email, password, name }, { rejectWithValue }) => {
+  async ({ email, password, name, profileImage }, { rejectWithValue }) => {
     try {
         ////Get existing users from AsyncStorage (or empty array if none)
       const usersData = await AsyncStorage.getItem('registeredUsers');
@@ -28,6 +28,7 @@ export const signUp = createAsyncThunk(
         name: name.trim(),
         email: email.toLowerCase().trim(),
         password,
+        profileImage: profileImage || null,
         createdAt: new Date().toISOString(),
       };
 

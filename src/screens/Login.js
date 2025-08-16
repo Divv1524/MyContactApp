@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect} from 'react';
 import {
   View,
   Text,
@@ -9,21 +9,44 @@ import {
   Alert,
   TouchableWithoutFeedback,
   Keyboard,
+  Image
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { useDispatch } from 'react-redux';
+import {useSelector, useDispatch } from 'react-redux';
 import { login } from '../redux/slice/authSlices';
 
 const Login = () => {
   const dispatch = useDispatch(); 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+   const savedUser = useSelector(state => state.auth.user);
   const navigation = useNavigation();
   const input = useRef();
+  const [typedUser, setTypedUser] = useState(null);
 
   const dismissFocus = () => {
     input.current?.blur();
   };
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      if (!email) {
+        setTypedUser(null);
+        return;
+      }
+      try {
+        const usersData = await AsyncStorage.getItem('registeredUsers');
+        const users = usersData ? JSON.parse(usersData) : [];
+        const found = users.find(
+          u => u.email.toLowerCase() === email.toLowerCase()
+        );
+        setTypedUser(found || null);
+      } catch (err) {
+        console.log('Error reading users:', err);
+      }
+    };
+    fetchUser();
+  }, [email]);
 
   const handleLogin = () => {
   if (!email || !password) {
@@ -40,6 +63,11 @@ const Login = () => {
     .catch((err) => Alert.alert('Login Failed', err));
 };
 
+// Decide which image to show:
+  // 1. If user is typing email and match found -> typedUser.profileImage
+  // 2. Else fallback to last logged in user (savedUser.profileImage)
+  const profileImage = typedUser?.profileImage || savedUser?.profileImage;
+
 
   return (
     <TouchableWithoutFeedback onPress={() => {
@@ -48,6 +76,14 @@ const Login = () => {
     }}>
       <View style={styles.container}>
         <Text style={styles.title}>Login</Text>
+
+        {/* Show profile image if available */}
+        {profileImage ? (
+          <Image
+            source={{ uri: profileImage }}
+            style={{ width: 100, height: 100, borderRadius: 50, alignSelf: 'center', marginBottom: 20 }}
+          />
+        ) : null}
 
         <TextInput
           style={styles.input}
