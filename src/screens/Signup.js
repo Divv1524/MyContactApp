@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useDispatch } from 'react-redux';
 import { signUp } from '../redux/slice/authSlices';
 
@@ -71,10 +72,15 @@ const SignUp = () => {
     });
   };
 
-  const handleSignUp = () => {
+  const handleSignUp = async() => {
     if (!name || !email || !password) {
       Alert.alert('Error', 'Please fill all fields');
       return;
+    }
+    try {
+    // Save profile image permanently with key = email
+     if (profileImage) {
+      await AsyncStorage.setItem(`profile_${email.trim().toLowerCase()}`, profileImage);
     }
 
     // Dispatch signUp thunk to handle async API logic
@@ -91,10 +97,12 @@ const SignUp = () => {
         Alert.alert('Success', 'Account created successfully');
         navigation.navigate('Login');
       })
-      .catch((err) => {
+    }
+      catch(err) {
         Alert.alert('Signup Failed', err);
-      });
-  };
+      }
+    };
+
 
   return (
     <View style={styles.container}>

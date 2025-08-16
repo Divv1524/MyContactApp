@@ -19,10 +19,10 @@ const AddContact = () => {
   const [mobile, setMobile] = useState('');
   const navigation = useNavigation();
   const dispatch = useDispatch();
-  const contacts = useSelector((state) => state.contacts.contactList);  //This line reads data from your Redux store using the useSelector hook.
   const route = useRoute();
-  const editingContact = route.params?.contact;
-  const editingIndex = route.params?.index;
+  const user = useSelector((state) => state.auth.user); // current logged-in user
+  const contacts = useSelector((state) => state.contacts.contacts); //This line reads data from your Redux store using the useSelector hook.
+  const editingContact = route.params?.contact || null;
 
   //AddContact screen is used for both:new or edit
   useEffect(() => {
@@ -31,7 +31,7 @@ const AddContact = () => {
       setName(editingContact.name);
       setMobile(editingContact.mobile);
     }
-  }, []);
+  }, [editingContact]);
 
   const requestPermission = async () => {
     if (Platform.OS === 'android') {
@@ -81,19 +81,23 @@ const AddContact = () => {
     }
 
     const duplicate = contacts.find(
-      (c, i) => c.mobile === mobile && i !== editingIndex
+      (c) => c.mobile === mobile && c.id !== editingContact?.id
     );
     if (duplicate) {
       Alert.alert('Duplicate Contact', 'A contact with this mobile number already exists.');
       return;
     }
 
-    const newContact = { name, mobile };
+    const newContact = {
+      id: editingContact ? editingContact.id : Date.now(),
+      name,
+      mobile,
+    };
 
     if (editingContact) {
-      dispatch(updateContact(editingIndex, newContact));
+      dispatch(updateContact({ userId: user.id, contactId: editingContact.id, updatedContact: newContact }));
     } else {
-      dispatch(addContact(newContact));
+      dispatch(addContact({ userId: user.id, contact: newContact }));
     }
 
     try {
@@ -152,7 +156,7 @@ export default AddContact;
 
 const styles = StyleSheet.create({
   container: { flex: 1, justifyContent: 'center', padding: 20, backgroundColor: '#f0f8ff' },
-  input: { borderWidth: 1, borderColor: '#999', padding: 10, marginVertical: 10, borderRadius: 8 },
+  input: { borderWidth: 1, borderColor: '#999', padding: 10, marginVertical: 10, borderRadius: 8, color:'black' },
   button: { backgroundColor: '#3498db', padding: 15, borderRadius: 8, marginTop: 10 },
   buttonText: { color: '#fff', textAlign: 'center', fontWeight: 'bold' },
 });

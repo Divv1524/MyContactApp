@@ -1,54 +1,45 @@
-import { View, Text, TouchableOpacity, StyleSheet, FlatList, Alert } from 'react-native';
-import React from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, FlatList } from 'react-native';
+import React, { useEffect } from 'react';
 import { useNavigation } from '@react-navigation/native';
+import { loadContacts, deleteContact, clearContacts, } from '../redux/slice/contactSlices';
 import { useSelector, useDispatch } from 'react-redux';
-
-
-import Contacts from 'react-native-contacts';
-
-import { deleteContact } from '../redux/slice/contactSlices';
 import { logout } from '../redux/slice/authSlices';
 
-const Contact = () => {
-  const navigation = useNavigation();
+const Contact = ({ navigation }) => {
   const dispatch = useDispatch();
-  const contactList = useSelector((state) => state.contacts.contactList);
+  const user = useSelector((state) => state.auth.user);
+  const contacts = useSelector((state) => state.contacts.contacts);
 
-  const handleDelete = async (index) => {
-    const contactToDelete = contactList[index];
-    dispatch(deleteContact(index));
-
-    try {
-      const deviceContacts = await Contacts.getAll();
-      const match = deviceContacts.find(
-        (c) =>
-          c.givenName === contactToDelete.name &&
-          c.phoneNumbers.some((p) => p.number.replace(/\s/g, '') === contactToDelete.mobile)
-      );
-      if (match) {
-        await Contacts.deleteContact(match);
-        console.log('Contact deleted from device');
-      }
-    } catch (err) {
-      console.warn('Error deleting contact from device:', err);
+  // Load contacts when screen mounts for the logged-in user
+  useEffect(() => {
+    if (user?.id) {
+      dispatch(loadContacts(user.id));
     }
-  };
+  }, [dispatch, user]);
 
+  // Handle logout
   const handleLogout = () => {
+    dispatch(clearContacts());
     dispatch(logout());
     navigation.navigate('Login');
   };
 
+  // Handle delete contact
+  const handleDelete = (contactId) => {
+    dispatch(deleteContact({ userId: user.id, contactId }));
+  };
+
   return (
-    <View style={{ flex: 1 }}>
+    <View style={styles.container}>
+      <Text style={styles.heading}>My Contacts</Text>
       <FlatList
-        data={contactList}
-        keyExtractor={(item, index) => index.toString()}
+        data={contacts}
+        keyExtractor={(item) => item.id.toString()}
         renderItem={({ item, index }) => (
-          <View style={styles.list}>
+          <View style={styles.contactCard}>
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <Text>{String(item?.name || '').toUpperCase()}</Text>
-              <Text style={{ marginLeft: 20 }}>{String(item?.mobile || '')}</Text>
+              <Text style={styles.contactName}>{item.name}</Text>
+              <Text style={styles.contactPhone}>{String(item?.mobile || '')}</Text>
             </View>
 
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
@@ -56,7 +47,7 @@ const Contact = () => {
                 style={styles.editbtn}
                 onPress={() => navigation.navigate('AddContact', {
                   contact: item,
-                  index,
+                  index: index,
                 })}
               >
                 <Text style={styles.text}>Edit</Text>
@@ -64,30 +55,38 @@ const Contact = () => {
 
               <TouchableOpacity
                 style={styles.delbtn}
-                onPress={() => handleDelete(index)}
+                onPress={() => handleDelete(item.id)}
               >
                 <Text style={styles.text}>Delete</Text>
               </TouchableOpacity>
             </View>
           </View>
         )}
+        ListEmptyComponent={
+          <Text style={styles.emptyText}>No contacts available</Text>
+        }
       />
-
-      <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('AddContact')}>
+      
+      <TouchableOpacity
+        style={styles.addBtn}
+        onPress={() => navigation.navigate('AddContact')}
+      >
         <Text style={styles.text}>Add New Contact</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity style={styles.logoutbutton} onPress={handleLogout}>
-        <Text style={styles.text}>Log Out</Text>
+      <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
+        <Text style={styles.text}>Logout</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity  style={styles.newsbtn}onPress={() => navigation.navigate('News')}>
-        <Text style={styles.text}>Tesla News</Text>
-      </TouchableOpacity>
+      <View style={styles.buttonRow}>
+        <TouchableOpacity style={styles.newsbtn}onPress={() => navigation.navigate('News')}>
+          <Text style={styles.text}>News</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.locbtn}onPress={() => navigation.navigate('LocationScreen')}>
+          <Text style={styles.text}>Location</Text>
+        </TouchableOpacity>
+      </View>
 
-      <TouchableOpacity  style={styles.locbtn}onPress={() => navigation.navigate('LocationScreen')}>
-        <Text style={styles.text}>Location</Text>
-      </TouchableOpacity>
 
 
 
@@ -98,10 +97,35 @@ const Contact = () => {
 export default Contact;
 
 const styles = StyleSheet.create({
-  text: {
-    color: '#fff',
+  container: {
+    flex: 1,
+    padding: 16,
+    backgroundColor: '#fff',
   },
-  button: {
+  heading: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    marginBottom: 5,
+    marginTop: 25
+  },
+  contactPhone: {
+    fontSize: 14,
+    color: 'black',
+    marginLeft: 20
+  },
+  contactCard: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    padding: 12,
+    marginVertical: 6,
+    backgroundColor: '#f5f5f5',
+    borderRadius: 8,
+  },
+  contactName: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  addBtn: {
     width: 200,
     height: 50,
     borderRadius: 30,
@@ -112,7 +136,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  logoutbutton: {
+  logoutBtn: {
     width: 100,
     height: 50,
     borderRadius: 30,
@@ -123,59 +147,50 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  list: {
-    width: '90%',
-    minHeight: 50,
-    borderWidth: 1,
-    alignSelf: 'center',
-    borderRadius: 10,
-    marginTop: 25,
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingLeft: 20,
-    justifyContent: 'space-between',
-    paddingRight: 10,
+  text: {
+    color: '#fff',
+    fontWeight: '600',
+  },
+  emptyText: {
+    textAlign: 'center',
+    marginTop: 20,
+    color: '#777',
   },
   delbtn: {
-    backgroundColor: 'red',
-    paddingHorizontal: 10,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderRadius: 10,
-    marginLeft: 10,
+    backgroundColor: '#ff4d4d',
+    padding: 8,
+    borderRadius: 6,
+    marginLeft: 10
   },
   editbtn: {
     backgroundColor: 'green',
-    paddingHorizontal: 10,
+    padding: 8,
     justifyContent: 'center',
     alignItems: 'center',
-    borderRadius: 10,
+    borderRadius: 6,
   },
-  newsbtn:{
+  buttonRow: {
+    flexDirection: 'row',
+    justifyContent:'space-around' ,
+    alignItems: 'center',
+    marginBottom: 80,
+  },
+  newsbtn: {
     width: 100,
     height: 50,
-    color:'red',
     borderRadius: 10,
     backgroundColor: 'blue',
-    marginLeft:30,
-    marginBottom:20,
     justifyContent: 'center',
     alignItems: 'center',
-    position:'relative',
-    padding:10
+    marginRight:10,
   },
-  locbtn:{
+  locbtn: {
     width: 100,
     height: 50,
-    color:'red',
     borderRadius: 10,
     backgroundColor: 'brown',
-    marginLeft:30,
-    marginBottom:80,
     justifyContent: 'center',
-    position: 'relative',
     alignItems: 'center',
-    padding:10
+  },
 
-  }
 });

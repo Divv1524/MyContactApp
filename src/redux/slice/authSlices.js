@@ -9,12 +9,16 @@ const initialState = {
 
 // Async Thunk: Sign Up
 
+//Storage key
+const USER_KEY = 'loggedInUser';
+
+// Sign Up (store user info in AsyncStorage - local users)
 export const signUp = createAsyncThunk(
   'auth/signUp',
   async ({ email, password, name, profileImage }, { rejectWithValue }) => {
     try {
         ////Get existing users from AsyncStorage (or empty array if none)
-      const usersData = await AsyncStorage.getItem('registeredUsers');
+      const usersData = await AsyncStorage.getItem('users');
       const users = usersData ? JSON.parse(usersData) : [];
 
       const userExists = users.some(user => user.email.toLowerCase() === email.toLowerCase());
@@ -33,10 +37,10 @@ export const signUp = createAsyncThunk(
       };
 
       // Save all users including this new one back to storage
-      await AsyncStorage.setItem('registeredUsers', JSON.stringify([...users, newUser]));
-
-      const { password: _, ...userWithoutPassword } = newUser;
-      return userWithoutPassword;
+      users.push(newUser);
+      await AsyncStorage.setItem('users', JSON.stringify(users));
+      await AsyncStorage.setItem(USER_KEY, JSON.stringify(newUser));
+      return newUser;
     } catch (err) {
       return rejectWithValue(err.message || 'Sign up failed');
     }
@@ -48,7 +52,7 @@ export const login = createAsyncThunk(
   'auth/signIn',
   async ({ email, password }, { rejectWithValue }) => {
     try {
-      const usersData = await AsyncStorage.getItem('registeredUsers');
+      const usersData = await AsyncStorage.getItem('users');
       const users = usersData ? JSON.parse(usersData) : [];
 
       const found = users.find(u => u.email.toLowerCase() === email.toLowerCase());
@@ -56,8 +60,8 @@ export const login = createAsyncThunk(
       if (!found) return rejectWithValue('No account found with this email');
       if (found.password !== password) return rejectWithValue('Incorrect password');
 
-      const { password: _, ...userWithoutPassword } = found;
-      return userWithoutPassword;
+      await AsyncStorage.setItem(USER_KEY, JSON.stringify(found));
+      return found;
     } catch (err) {
       return rejectWithValue(err.message || 'Sign in failed');
     }
@@ -67,7 +71,14 @@ export const login = createAsyncThunk(
 // Async Thunk: Sign Out
 //Just clears the user from Redux state (No need to remove anything from storage here)
 export const logout = createAsyncThunk('auth/signOut', async () => {
+  await AsyncStorage.removeItem(USER_KEY);
   return null;
+});
+
+//Load session from storage
+export const loadUser = createAsyncThunk('auth/loadUser', async () => {
+  const stored = await AsyncStorage.getItem(USER_KEY);
+  return stored ? JSON.parse(stored) : null;
 });
 
 const authSlice = createSlice({
@@ -108,6 +119,9 @@ const authSlice = createSlice({
         state.user = null;
         state.loading = false;
         state.error = null;
+      })
+      .addCase(loadUser.fulfilled, (state, action) => {
+        state.user = action.payload;
       });
   },
 });

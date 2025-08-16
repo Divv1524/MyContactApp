@@ -28,24 +28,26 @@ const Login = () => {
     input.current?.blur();
   };
 
+  // Whenever email changes, check if we have an image saved for it
   useEffect(() => {
-    const fetchUser = async () => {
-      if (!email) {
-        setTypedUser(null);
-        return;
+    const fetchProfileImage = async () => {
+      if (email) {
+        try {
+          const savedImage = await AsyncStorage.getItem(`profile_${email}`);
+          if (savedImage) {
+            setTypedUser({ profileImage: savedImage });
+          } else {
+            setTypedUser(null);
+          }
+        } catch (err) {
+          console.log("Error fetching image:", err);
+        }
       }
-      try {
-        const usersData = await AsyncStorage.getItem('registeredUsers');
-        const users = usersData ? JSON.parse(usersData) : [];
-        const found = users.find(
-          u => u.email.toLowerCase() === email.toLowerCase()
-        );
-        setTypedUser(found || null);
-      } catch (err) {
-        console.log('Error reading users:', err);
-      }
+      else {
+      setTypedUser(null);
+    }
     };
-    fetchUser();
+    fetchProfileImage();
   }, [email]);
 
   const handleLogin = () => {
