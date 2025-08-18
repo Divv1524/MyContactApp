@@ -32,6 +32,7 @@ const Contact = ({ navigation }) => {
   return (
     <View style={styles.container}>
       <Text style={styles.heading}>My Contacts</Text>
+
       <FlatList
         data={contacts}
         keyExtractor={(item) => item.id.toString()}
@@ -66,30 +67,29 @@ const Contact = ({ navigation }) => {
           <Text style={styles.emptyText}>No contacts available</Text>
         }
       />
-      
-      <TouchableOpacity
-        style={styles.addBtn}
-        onPress={() => navigation.navigate('AddContact')}
-      >
-        <Text style={styles.text}>Add New Contact</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
-        <Text style={styles.text}>Logout</Text>
-      </TouchableOpacity>
 
       <View style={styles.buttonRow}>
-        <TouchableOpacity style={styles.newsbtn}onPress={() => navigation.navigate('News')}>
+        <TouchableOpacity style={styles.newsbtn} onPress={() => navigation.navigate('News')}>
           <Text style={styles.text}>News</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.locbtn}onPress={() => navigation.navigate('LocationScreen')}>
+        <TouchableOpacity style={styles.locbtn} onPress={() => navigation.navigate('LocationScreen')}>
           <Text style={styles.text}>Location</Text>
         </TouchableOpacity>
       </View>
 
+      <View style={styles.bottomRow}>
+        <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
+          <Text style={styles.text}>Logout</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.addBtn}
+          onPress={() => navigation.navigate('AddContact')}
+        >
+          <Text style={styles.text}>Add New Contact</Text>
+        </TouchableOpacity>
+      </View>
 
-
-
+      
     </View>
   );
 };
@@ -100,52 +100,56 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 16,
-    backgroundColor: '#fff',
+    backgroundColor: '#f9f9f9',
   },
   heading: {
-    fontSize: 22,
+    fontSize: 24,
     fontWeight: 'bold',
-    marginBottom: 5,
-    marginTop: 25
+    marginBottom: 15,
+    marginTop: 25,
+    color: '#222',
+    textAlign: 'center',
   },
   contactPhone: {
     fontSize: 14,
-    color: 'black',
+    color: '#555',
     marginLeft: 20
   },
   contactCard: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    padding: 12,
+    padding: 15,
     marginVertical: 6,
-    backgroundColor: '#f5f5f5',
-    borderRadius: 8,
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 5,
+    elevation: 3,
   },
   contactName: {
     fontSize: 16,
     fontWeight: '600',
+    color: '#000',
   },
   addBtn: {
-    width: 200,
+    flex: 1,
     height: 50,
     borderRadius: 30,
-    backgroundColor: '#000',
-    position: 'absolute',
-    bottom: 20,
-    right: 20,
+    backgroundColor: '#4caf50',
     justifyContent: 'center',
     alignItems: 'center',
+    marginLeft: 10,
   },
   logoutBtn: {
-    width: 100,
+    flex: 1,
     height: 50,
     borderRadius: 30,
-    backgroundColor: '#000',
-    position: 'absolute',
-    bottom: 20,
-    left: 20,
+    backgroundColor: '#e53935',
     justifyContent: 'center',
     alignItems: 'center',
+    marginRight: 10,
   },
   text: {
     color: '#fff',
@@ -158,39 +162,47 @@ const styles = StyleSheet.create({
   },
   delbtn: {
     backgroundColor: '#ff4d4d',
-    padding: 8,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
     borderRadius: 6,
     marginLeft: 10
   },
   editbtn: {
-    backgroundColor: 'green',
-    padding: 8,
+    backgroundColor: '#4caf50',
+    paddingVertical: 6,
+    paddingHorizontal: 12,
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: 6,
   },
   buttonRow: {
     flexDirection: 'row',
-    justifyContent:'space-around' ,
-    alignItems: 'center',
-    marginBottom: 80,
+    justifyContent: 'space-between',
+    marginTop: 15,
+    marginHorizontal: 10,
   },
   newsbtn: {
-    width: 100,
+    flex: 1,
     height: 50,
-    borderRadius: 10,
-    backgroundColor: 'blue',
+    borderRadius: 12,
+    backgroundColor: '#1976d2',
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight:10,
+    marginRight: 8,
   },
   locbtn: {
-    width: 100,
+    flex: 1,
     height: 50,
-    borderRadius: 10,
-    backgroundColor: 'brown',
+    borderRadius: 12,
+    backgroundColor: '#8d6e63',
     justifyContent: 'center',
     alignItems: 'center',
+    marginLeft: 8,
   },
-
+  bottomRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 20,
+    marginBottom: 20,
+  },
 });

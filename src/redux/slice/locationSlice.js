@@ -6,6 +6,7 @@ const initialState = {
   isTracking: false,
   error: null,
   loading: false,
+  logs: [],
 };
 
 const locationSlice = createSlice({
@@ -29,6 +30,17 @@ const locationSlice = createSlice({
     clearLocationError: (state) => {
       state.error = null;
     },
+    addLocationLog: (state, action) => {
+      state.logs.push(action.payload); 
+      // payload = { timestamp, latitude, longitude }
+    },
+    clearLogs: (state) => {
+      state.logs = [];
+    },
+    setLogs: (state, action) => {
+      state.logs = action.payload; 
+      // replace entire log array
+    },
   },
 });
 
@@ -38,6 +50,9 @@ export const {
   setLocationLoading,
   setLocationTracking,
   clearLocationError,
+  addLocationLog,
+  clearLogs,
+  setLogs,
 } = locationSlice.actions;
 
 export default locationSlice.reducer;

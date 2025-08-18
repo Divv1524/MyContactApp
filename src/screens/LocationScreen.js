@@ -11,6 +11,8 @@ import {
   PermissionsAndroid,
   Platform
 } from 'react-native';
+import RNFS from 'react-native-fs';
+import Share from 'react-native-share';
 import { useDispatch, useSelector } from 'react-redux';
 import {
   setCurrentLocation,
@@ -18,41 +20,11 @@ import {
   setLocationLoading,
   setLocationTracking,
   clearLocationError,
+  addLocationLog,
+  clearLogs,
 } from '../redux/slice/locationSlice';
 import LocationService from '../services/LocationService';
 import MapView, { Marker } from 'react-native-maps';
-
-// const SimpleMap = ({ location, style }) => {
-//   if (!location) {
-//     return (
-//       <View style={[style, styles.mapPlaceholder]}>
-//         <Text style={styles.mapPlaceholderText}>
-//           📡 Waiting for GPS fix...
-//         </Text>
-//       </View>
-//     );
-//   }
-
-//   return (
-//     <View style={[style, styles.mapContainer]}>
-//       <View style={styles.mapContent}>
-//         <View style={styles.pin} />
-//         <Text style={styles.coordinatesText}>
-//           Latitude: {location.latitude.toFixed(6)}
-//         </Text>
-//         <Text style={styles.coordinatesText}>
-//           Longitude: {location.longitude.toFixed(6)}
-//         </Text>
-//         <Text style={styles.accuracyText}>
-//           Accuracy: ±{location.accuracy.toFixed(2)} m
-//         </Text>
-//         <Text style={styles.timestampText}>
-//           Last update: {new Date(location.timestamp).toLocaleTimeString()}
-//         </Text>
-//       </View>
-//     </View>
-//   );
-// };
 
 async function requestPermissions() {
   if (Platform.OS === 'android') {
@@ -74,21 +46,27 @@ async function requestPermissions() {
 
 const LocationScreen = () => {
   const dispatch = useDispatch();
-  const { currentLocation, isTracking, error, loading } = useSelector(
+  const { currentLocation, isTracking, error, loading, logs: locationHistory } = useSelector(
     (state) => state.location
   );
   const unsubscribeRef = useRef(null);
 
   useEffect(() => {
     requestPermissions().then(() => {
-    const unsubscribe = LocationService.subscribeToLocationUpdates((location) => {
-      console.log('Location update received:', location);
-      dispatch(setCurrentLocation(location));
-    });
+      const unsubscribe = LocationService.subscribeToLocationUpdates((location) => {
+        console.log('Location update received:', location);
+        dispatch(setCurrentLocation(location));
 
-    unsubscribeRef.current = unsubscribe;
-    handleGetCurrentLocation();
-  });
+        dispatch(addLocationLog({
+          latitude: location.latitude,
+          longitude: location.longitude,
+          timestamp: new Date(location.timestamp).toISOString(),
+        }));
+      });
+
+      unsubscribeRef.current = unsubscribe;
+      handleGetCurrentLocation();
+    });
 
     return () => {
       if (unsubscribeRef.current) {
@@ -105,6 +83,11 @@ const LocationScreen = () => {
 
       const location = await LocationService.getCurrentLocation();
       dispatch(setCurrentLocation(location));
+      dispatch(addLocationLog({
+        latitude: location.latitude,
+        longitude: location.longitude,
+        timestamp: new Date(location.timestamp).toISOString(),
+      }));
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Unable to fetch current location';
       dispatch(setLocationError(errorMessage));
@@ -152,6 +135,46 @@ const LocationScreen = () => {
     }
   };
 
+  //Export history to CSV
+  const handleExportCSV = async () => {
+    if (locationHistory.length === 0) {
+      Alert.alert('No Data', 'No location history to export');
+      return;
+    }
+
+    // Convert array → CSV string
+    let csv = "latitude,longitude,timestamp\n";
+    locationHistory.forEach((loc) => {
+      csv += `${loc.latitude},${loc.longitude},${loc.timestamp}\n`;
+    });
+
+    // Save to file
+    const path = `${RNFS.DownloadDirectoryPath}/location_log.csv`;
+    try {
+      await RNFS.writeFile(path, csv, 'utf8');
+      console.log("CSV saved at:", path);
+
+      // Share the file (optional)
+      await Share.open({
+        url: `file://${path}`,
+        type: 'text/csv',
+        filename: 'location_log',
+      });
+    } catch (err) {
+      console.error("CSV Export Error:", err);
+      Alert.alert('Error', 'Failed to export CSV');
+    }
+  };
+
+  const handleClearLogs = () => {
+    if (locationHistory.length === 0) {
+      Alert.alert("No Logs", "There are no logs to clear.");
+      return;
+    }
+    dispatch(clearLogs());
+    Alert.alert("Success", "All location logs cleared.");
+  };
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -162,8 +185,6 @@ const LocationScreen = () => {
           </View>
         )}
       </View>
-
-      {/* <SimpleMap location={currentLocation} style={styles.map} /> */}
 
       <View style={styles.mapWrapper}>
         {currentLocation ? (
@@ -220,23 +241,15 @@ const LocationScreen = () => {
 
       <View style={styles.controlsContainer}>
         <View style={styles.buttonRow}>
-          <TouchableOpacity
-            style={[styles.button, styles.primaryButton]}
-            onPress={handleGetCurrentLocation}
-            disabled={loading}
-          >
+          <TouchableOpacity style={[styles.button, styles.primaryButton]} onPress={handleGetCurrentLocation}disabled={loading}>
             {loading ? (
               <ActivityIndicator color="white" size="small" />
             ) : (
               <Text style={styles.buttonText}>📡 Refresh</Text>
             )}
           </TouchableOpacity>
-
           <TouchableOpacity
-            style={[
-              styles.button,
-              isTracking ? styles.dangerButton : styles.successButton,
-            ]}
+            style={[styles.button, isTracking ? styles.dangerButton : styles.successButton,]}
             onPress={isTracking ? handleStopTracking : handleStartTracking}
             disabled={loading}
           >
@@ -247,6 +260,17 @@ const LocationScreen = () => {
                 {isTracking ? '⛔ Stop' : '▶ Start'}
               </Text>
             )}
+          </TouchableOpacity>
+
+        </View>
+
+        <View style={styles.buttonRow}>
+          <TouchableOpacity style={[styles.button, styles.successButton]}onPress={handleExportCSV}>
+            <Text style={styles.buttonText}>Export CSV</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={[styles.button, styles.dangerButton]} onPress={handleClearLogs}>
+            <Text style={styles.buttonText}>Clear File</Text>
           </TouchableOpacity>
         </View>
 
@@ -269,7 +293,7 @@ const { width } = Dimensions.get('window');
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F9FAFB' },
-  header: { backgroundColor: '#2563EB', padding: 20, paddingTop: 50 },
+  header: { backgroundColor: '#2563EB', padding: 20, paddingTop: 30 },
   title: { fontSize: 22, fontWeight: 'bold', color: '#FFFFFF', textAlign: 'center' },
   errorContainer: { backgroundColor: '#DC2626', padding: 10, marginTop: 10, borderRadius: 5 },
   errorText: { color: 'white', textAlign: 'center' },
@@ -327,6 +351,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     minHeight: 48,
+     maxWidth: '48%',
   },
   primaryButton: { backgroundColor: '#2563EB' },
   successButton: { backgroundColor: '#10B981' },
