@@ -23,7 +23,7 @@ class NativeLocationModule(reactContext: ReactApplicationContext) :
 
     private var locationManager: LocationManager? = null
     private var lastKnownLocation: Location? = null
-    private val MIN_DISTANCE_CHANGE_FOR_UPDATES = 1f // meters
+    private val MIN_DISTANCE_CHANGE_FOR_UPDATES = 50f // meters
     private val NOTIFICATION_ID = 101
     private val MIN_TIME_BW_UPDATES = 10000L // ms
     private val CHANNEL_ID = "location_channel_id"
