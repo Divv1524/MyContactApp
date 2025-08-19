@@ -1,7 +1,7 @@
-import { View, Text, TouchableOpacity, StyleSheet, FlatList } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, FlatList, StatusBar, Platform } from 'react-native';
 import React, { useEffect } from 'react';
 import { useNavigation } from '@react-navigation/native';
-import { loadContacts, deleteContact, clearContacts, } from '../redux/slice/contactSlices';
+import { loadContacts, deleteContact, clearContacts } from '../redux/slice/contactSlices';
 import { useSelector, useDispatch } from 'react-redux';
 import { logout } from '../redux/slice/authSlices';
 
@@ -10,97 +10,182 @@ const Contact = ({ navigation }) => {
   const user = useSelector((state) => state.auth.user);
   const contacts = useSelector((state) => state.contacts.contacts);
 
-  // Load contacts when screen mounts for the logged-in user
   useEffect(() => {
     if (user?.id) {
       dispatch(loadContacts(user.id));
     }
   }, [dispatch, user]);
 
-  // Handle logout
   const handleLogout = () => {
     dispatch(clearContacts());
     dispatch(logout());
     navigation.navigate('Login');
   };
 
-  // Handle delete contact
   const handleDelete = (contactId) => {
     dispatch(deleteContact({ userId: user.id, contactId }));
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.heading}>My Contacts</Text>
-
-      <FlatList
-        data={contacts}
-        keyExtractor={(item) => item.id.toString()}
-        renderItem={({ item, index }) => (
-          <View style={styles.contactCard}>
-            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <Text style={styles.contactName}>{item.name}</Text>
-              <Text style={styles.contactPhone}>{String(item?.mobile || '')}</Text>
-            </View>
-
-            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <TouchableOpacity
-                style={styles.editbtn}
-                onPress={() => navigation.navigate('AddContact', {
-                  contact: item,
-                  index: index,
-                })}
-              >
-                <Text style={styles.text}>Edit</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={styles.delbtn}
-                onPress={() => handleDelete(item.id)}
-              >
-                <Text style={styles.text}>Delete</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        )}
-        ListEmptyComponent={
-          <Text style={styles.emptyText}>No contacts available</Text>
-        }
+    <>
+      <StatusBar
+        barStyle="dark-content"
+        backgroundColor="transparent"
+        translucent={true}
       />
 
-      <View style={styles.buttonRow}>
-        <TouchableOpacity style={styles.newsbtn} onPress={() => navigation.navigate('News')}>
-          <Text style={styles.text}>News</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.locbtn} onPress={() => navigation.navigate('LocationScreen')}>
-          <Text style={styles.text}>Location</Text>
-        </TouchableOpacity>
+      {/* Full-screen decorative background */}
+      <View style={styles.fullBackground}>
+        <View style={styles.circle1} />
+        <View style={styles.circle2} />
+        <View style={styles.circle3} />
+        <View style={styles.circle4} />
+        <View style={styles.circle5} />
+<View style={styles.circle6} />
+<View style={styles.circle7} />
       </View>
 
-      <View style={styles.bottomRow}>
-        <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
-          <Text style={styles.text}>Logout</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.addBtn}
-          onPress={() => navigation.navigate('AddContact')}
-        >
-          <Text style={styles.text}>Add New Contact</Text>
-        </TouchableOpacity>
+      <View style={styles.headerContainer}>
+        <Text style={styles.heading}>My Contacts</Text>
       </View>
 
-      
-    </View>
+      <View style={styles.container}>
+        <FlatList
+          data={contacts}
+          keyExtractor={(item) => item.id.toString()}
+          renderItem={({ item, index }) => (
+            <View style={styles.contactCard}>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Text style={styles.contactName}>{item.name}</Text>
+                <Text style={styles.contactPhone}>{String(item?.mobile || '')}</Text>
+              </View>
+
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <TouchableOpacity
+                  style={styles.editbtn}
+                  onPress={() => navigation.navigate('AddContact', {
+                    contact: item,
+                    index: index,
+                  })}
+                >
+                  <Text style={styles.text}>Edit</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.delbtn}
+                  onPress={() => handleDelete(item.id)}
+                >
+                  <Text style={styles.text}>Delete</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          )}
+          ListEmptyComponent={
+            <Text style={styles.emptyText}>No contacts available</Text>
+          }
+        />
+
+        <View style={styles.bottomRow}>
+          <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
+            <Text style={styles.text}>Logout</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.addBtn}
+            onPress={() => navigation.navigate('AddContact')}
+          >
+            <Text style={styles.text}>Add New Contact</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </>
   );
 };
 
 export default Contact;
 
 const styles = StyleSheet.create({
+  fullBackground: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: '#cfe9ff',
+  },
+  circle1: {
+    position: 'absolute',
+    width: 150,
+    height: 150,
+    borderRadius: 75,
+    backgroundColor: 'rgba(255,255,255,0.3)',
+    top: 50,
+    left: 30,
+  },
+  circle2: {
+    position: 'absolute',
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: 'rgba(255,255,255,0.25)',
+    top: 120,
+    right: 40,
+  },
+  circle3: {
+    position: 'absolute',
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    bottom: 50,
+    left: 60,
+  },
+  circle4: {
+    position: 'absolute',
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    bottom: 100,
+    right: 50,
+  },
+  headerContainer: {
+    backgroundColor: 'transparent',
+    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight + 10 : 50,
+    paddingBottom: 10,
+  },
+  circle5: {
+  position: 'absolute',
+  width: 180,
+  height: 180,
+  borderRadius: 90,
+  backgroundColor: 'rgba(255,255,255,0.1)',
+  top: '45%',
+  left: '10%',
+},
+circle6: {
+  position: 'absolute',
+  width: 140,
+  height: 140,
+  borderRadius: 70,
+  backgroundColor: 'rgba(255,255,255,0.1)',
+  top: '30%',
+  right: '20%',
+},
+circle7: {
+  position: 'absolute',
+  width: 100,
+  height: 100,
+  borderRadius: 50,
+  backgroundColor: 'rgba(255,255,255,0.1)',
+  top: '60%',
+  right: '10%',
+},
+
   container: {
     flex: 1,
-    padding: 16,
-    backgroundColor: '#f9f9f9',
+    paddingTop: 5,
+    padding: 10,
+    backgroundColor: 'transparent',
   },
   heading: {
     fontSize: 24,
@@ -113,7 +198,7 @@ const styles = StyleSheet.create({
   contactPhone: {
     fontSize: 14,
     color: '#555',
-    marginLeft: 20
+    marginLeft: 20,
   },
   contactCard: {
     flexDirection: 'row',
@@ -165,7 +250,7 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     paddingHorizontal: 12,
     borderRadius: 6,
-    marginLeft: 10
+    marginLeft: 10,
   },
   editbtn: {
     backgroundColor: '#4caf50',
@@ -174,30 +259,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: 6,
-  },
-  buttonRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 15,
-    marginHorizontal: 10,
-  },
-  newsbtn: {
-    flex: 1,
-    height: 50,
-    borderRadius: 12,
-    backgroundColor: '#1976d2',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 8,
-  },
-  locbtn: {
-    flex: 1,
-    height: 50,
-    borderRadius: 12,
-    backgroundColor: '#8d6e63',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginLeft: 8,
   },
   bottomRow: {
     flexDirection: 'row',

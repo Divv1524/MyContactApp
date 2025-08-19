@@ -81,6 +81,38 @@ export const loadUser = createAsyncThunk('auth/loadUser', async () => {
   return stored ? JSON.parse(stored) : null;
 });
 
+//Update profile
+export const updateProfile = createAsyncThunk(
+  'auth/updateProfile',
+  async ({ name, email, password, profileImage }, { getState, rejectWithValue }) => {
+    try {
+      const { user } = getState().auth;
+      if (!user) return rejectWithValue('No user logged in');
+
+      // Load all users
+      const usersData = await AsyncStorage.getItem('users');
+      let users = usersData ? JSON.parse(usersData) : [];
+
+      // Update the correct user
+      users = users.map(u =>
+        u.id === user.id
+          ? { ...u, name, email: email.toLowerCase().trim(), password: password ?? u.password, profileImage: profileImage ?? u.profileImage, }
+          : u
+      );
+
+      const updatedUser = { ...user, name, email: email.toLowerCase().trim(), password: password ?? user.password, profileImage: profileImage ?? user.profileImage, };
+
+      // Save changes
+      await AsyncStorage.setItem('users', JSON.stringify(users));
+      await AsyncStorage.setItem(USER_KEY, JSON.stringify(updatedUser));
+
+      return updatedUser;
+    } catch (err) {
+      return rejectWithValue(err.message || 'Profile update failed');
+    }
+  }
+);
+
 const authSlice = createSlice({
   name: 'auth',
   initialState,
@@ -122,6 +154,18 @@ const authSlice = createSlice({
       })
       .addCase(loadUser.fulfilled, (state, action) => {
         state.user = action.payload;
+      })
+      .addCase(updateProfile.pending, state => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(updateProfile.fulfilled, (state, action) => {
+        state.user = action.payload;
+        state.loading = false;
+      })
+      .addCase(updateProfile.rejected, (state, action) => {
+        state.error = action.payload;
+        state.loading = false;
       });
   },
 });

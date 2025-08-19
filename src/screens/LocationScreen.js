@@ -9,7 +9,12 @@ import {
   TouchableOpacity,
   Dimensions,
   PermissionsAndroid,
-  Platform
+  Platform,
+  ScrollView,
+  KeyboardAvoidingView,
+  StatusBar,
+  Keyboard,
+  TouchableWithoutFeedback,
 } from 'react-native';
 import RNFS from 'react-native-fs';
 import Share from 'react-native-share';
@@ -42,7 +47,6 @@ async function requestPermissions() {
     }
   }
 }
-
 
 const LocationScreen = () => {
   const dispatch = useDispatch();
@@ -148,9 +152,8 @@ const LocationScreen = () => {
       csv += `${loc.latitude},${loc.longitude},${loc.timestamp}\n`;
     });
 
-    // Save to file
-    const path = `${RNFS.DownloadDirectoryPath}/location_log.csv`;
     try {
+      const path = `${RNFS.CachesDirectoryPath}/location_log.csv`;
       await RNFS.writeFile(path, csv, 'utf8');
       console.log("CSV saved at:", path);
 
@@ -176,8 +179,21 @@ const LocationScreen = () => {
   };
 
   return (
+    <>
+    <StatusBar barStyle="dark-content" backgroundColor="transparent" translucent={true} />
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      >
+        <ScrollView
+          contentContainerStyle={{ flexGrow: 1 }}
+          keyboardShouldPersistTaps="handled"
+        >
+          <TouchableWithoutFeedback onPress={() => {
+                Keyboard.dismiss();
+              }}>
     <View style={styles.container}>
-      <View style={styles.header}>
+      <View style={[styles.header,styles.headerWithStatusBar]}>
         <Text style={styles.title}>📍 Live Location Tracker</Text>
         {error && (
           <View style={styles.errorContainer}>
@@ -278,14 +294,18 @@ const LocationScreen = () => {
           <Text style={styles.statusText}>
             {isTracking ? '🟢 Tracking Active' : '🔴 Tracking Inactive'}
           </Text>
-          {currentLocation && (
+          {/* {currentLocation && (
             <Text style={styles.statusText}>
               Provider: {currentLocation.provider || 'Unknown'}
             </Text>
-          )}
+          )} */}
         </View>
       </View>
     </View>
+    </TouchableWithoutFeedback>
+    </ScrollView>
+    </KeyboardAvoidingView>
+    </>
   );
 };
 
@@ -293,7 +313,10 @@ const { width } = Dimensions.get('window');
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F9FAFB' },
-  header: { backgroundColor: '#2563EB', padding: 20, paddingTop: 30 },
+  header: { backgroundColor: '#2563EB', padding: 20,  },
+  headerWithStatusBar: {
+    marginTop: Platform.OS === 'android' ? StatusBar.currentHeight + 10 : 40,
+  },
   title: { fontSize: 22, fontWeight: 'bold', color: '#FFFFFF', textAlign: 'center' },
   errorContainer: { backgroundColor: '#DC2626', padding: 10, marginTop: 10, borderRadius: 5 },
   errorText: { color: 'white', textAlign: 'center' },

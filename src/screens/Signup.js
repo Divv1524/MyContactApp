@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -7,26 +7,31 @@ import {
   StyleSheet,
   Alert,
   Image,
-  Button,
   PermissionsAndroid,
   Platform,
+  ScrollView,
+  KeyboardAvoidingView,
+  StatusBar,
+  Keyboard,
+  TouchableWithoutFeedback,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useDispatch } from 'react-redux';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 import { signUp } from '../redux/slice/authSlices';
-
 
 const SignUp = () => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [profileImage, setProfileImage] = useState(null);
+  const [showPassword, setShowPassword] = useState(false);
   const navigation = useNavigation();
+  const input=useRef();
   const dispatch = useDispatch();
 
-  // Permission request for Android
   const requestCameraPermission = async () => {
     if (Platform.OS === 'android') {
       try {
@@ -46,7 +51,11 @@ const SignUp = () => {
         return false;
       }
     }
-    return true; // iOS automatically asks
+    return true;
+  };
+
+  const dismissFocus = () => {
+    input.current?.blur();
   };
 
   const chooseImage = () => {
@@ -58,13 +67,11 @@ const SignUp = () => {
   };
 
   const takePhoto = async () => {
-
     const hasPermission = await requestCameraPermission();
     if (!hasPermission) {
       Alert.alert('Permission Denied', 'Camera permission is required.');
       return;
     }
-
     launchCamera({ mediaType: 'photo', saveToPhotos: true }, (response) => {
       if (!response.didCancel && !response.errorCode && response.assets?.length) {
         setProfileImage(response.assets[0].uri);
@@ -96,12 +103,10 @@ const SignUp = () => {
     }
 
     try {
-      // Save profile image permanently with key = email
       if (profileImage) {
         await AsyncStorage.setItem(`profile_${email.trim().toLowerCase()}`, profileImage);
       }
 
-      // Dispatch signUp thunk to handle async API logic
       dispatch(
         signUp({
           name: name.trim(),
@@ -114,71 +119,167 @@ const SignUp = () => {
         .then(() => {
           Alert.alert('Success', 'Account created successfully');
           navigation.navigate('Login');
-        })
+        });
     }
     catch (err) {
       Alert.alert('Signup Failed', err);
     }
   };
 
-
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Sign Up</Text>
+    <>
+    <StatusBar barStyle="dark-content" backgroundColor="#f9fcff" />
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      >
+    <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+      <TouchableWithoutFeedback onPress={() => {
+            dismissFocus();
+            Keyboard.dismiss();
+          }}>
+      <View style={styles.container}>
+        <Text style={styles.title}>Create Your Account</Text>
 
-      <TouchableOpacity onPress={chooseImage} style={{ alignSelf: 'center' }}>
-        <Image
-          source={
-            profileImage
-              ? { uri: profileImage }
-              : require('../assets/default-avatar.png')
-          }
-          style={{ width: 100, height: 100, borderRadius: 50 }}
+        <TouchableOpacity onPress={chooseImage} style={styles.avatarContainer}>
+          <Image
+            source={
+              profileImage
+                ? { uri: profileImage }
+                : require('../assets/default-avatar.png')
+            }
+            style={styles.avatar}
+          />
+          <Text style={styles.uploadText}>Upload Photo</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.secondaryButton} onPress={takePhoto}>
+          <Text style={styles.secondaryButtonText}>📷 Take Photo</Text>
+        </TouchableOpacity>
+
+        <TextInput
+          style={styles.input}
+          placeholder="Full Name"
+          value={name}
+          onChangeText={setName}
+          placeholderTextColor="#999"
         />
-        <Text style={{ textAlign: 'center', marginTop: 5 }}>Upload Photo</Text>
-      </TouchableOpacity>
+        <TextInput
+          style={styles.input}
+          placeholder="Email"
+          keyboardType="email-address"
+          value={email}
+          onChangeText={setEmail}
+          placeholderTextColor="#999"
+        />
+        <View style={styles.passwordContainer}>
+        <TextInput
+          style={styles.passwordInput}
+          placeholder="Password"
+          secureTextEntry={!showPassword}
+          value={password}
+          onChangeText={setPassword}
+          placeholderTextColor="#999"
+        />
+        <TouchableOpacity
+                          style={styles.eyeButton}
+                          onPress={() => setShowPassword(!showPassword)}
+                        >
+                          <Ionicons
+                            name={showPassword ? "eye-off" : "eye"}
+                            size={22}
+                            color="#666"
+                          />
+                        </TouchableOpacity>
+        </View>
 
-      <Button title="Take Photo" onPress={takePhoto} />
+        <TouchableOpacity style={styles.button} onPress={handleSignUp}>
+          <Text style={styles.buttonText}>Create Account</Text>
+        </TouchableOpacity>
 
-      <TextInput
-        style={styles.input}
-        placeholder="Full Name"
-        value={name}
-        onChangeText={setName}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Email"
-        keyboardType="email-address"
-        value={email}
-        onChangeText={setEmail}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Password"
-        secureTextEntry
-        value={password}
-        onChangeText={setPassword}
-      />
-
-      <TouchableOpacity style={styles.button} onPress={handleSignUp}>
-        <Text style={styles.text}>Create Account</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity onPress={() => navigation.navigate('Login')}>
-        <Text style={styles.link}>Already have an account? Login</Text>
-      </TouchableOpacity>
-    </View>
+        <TouchableOpacity onPress={() => navigation.navigate('Login')}>
+          <Text style={styles.link}>Already have an account? Login</Text>
+        </TouchableOpacity>
+      </View>
+      </TouchableWithoutFeedback>
+    </ScrollView>
+    </KeyboardAvoidingView>
+    </>
   );
 };
 
 export default SignUp;
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 20, justifyContent: 'center', backgroundColor: '#e9f5f8' },
-  title: { fontSize: 24, fontWeight: 'bold', alignSelf: 'center', marginBottom: 40 },
-  input: { borderWidth: 1, borderColor: '#aaa', borderRadius: 8, marginVertical: 10, padding: 10 },
-  button: { backgroundColor: '#80c3d8', padding: 15, borderRadius: 10, marginTop: 20 },
-  text: { textAlign: 'center', fontWeight: 'bold' },
-  link: { marginTop: 15, textAlign: 'center', color: 'blue' },
+  scroll: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    backgroundColor: '#f9fcff',
+  },
+  container: { flex: 1, padding: 20, justifyContent: 'center' },
+  title: { fontSize: 26, fontWeight: 'bold', alignSelf: 'center', marginBottom: 30, color: '#333' },
+
+  avatarContainer: { alignSelf: 'center', alignItems: 'center', marginBottom: 20 },
+  avatar: { width: 110, height: 110, borderRadius: 55, borderWidth: 2, borderColor: '#80c3d8' },
+  uploadText: { marginTop: 5, fontSize: 13, color: '#555' },
+
+  secondaryButton: {
+    backgroundColor: '#e3f6fb',
+    padding: 10,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginBottom: 15
+  },
+  secondaryButtonText: { color: '#0077b6', fontWeight: '600' },
+
+  input: {
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 10,
+    marginVertical: 8,
+    padding: 12,
+    fontSize: 15,
+    backgroundColor: 'white',
+    shadowColor: '#000',
+    shadowOpacity: 0.05,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  passwordInput: {
+    flex: 1,
+    paddingLeft: 15,
+    color: '#000',
+  },
+  eyeButton: {
+    paddingHorizontal: 8,
+  },
+  passwordContainer: {
+    width: '100%',
+    height: 50,
+    alignSelf: 'center',
+    marginTop: 15,
+    borderRadius: 12,
+    backgroundColor: '#fff',
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#ddd',
+    elevation: 2,
+  },
+
+  button: {
+    backgroundColor: '#80c3d8',
+    padding: 15,
+    borderRadius: 12,
+    marginTop: 20,
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowOffset: { width: 0, height: 3 },
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  buttonText: { textAlign: 'center', fontWeight: 'bold', color: '#fff', fontSize: 16 },
+
+  link: { marginTop: 18, textAlign: 'center', color: '#0077b6', fontSize: 14 },
 });

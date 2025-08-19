@@ -1,5 +1,5 @@
-import { View, Text, StyleSheet } from 'react-native';
-import React, { useEffect } from 'react';
+import { View, StyleSheet, Platform, Image, Animated } from 'react-native';
+import React, { useEffect , useRef} from 'react';
 import { useNavigation } from '@react-navigation/native';
 import { useSelector } from 'react-redux'; // Import Redux hook
 
@@ -7,10 +7,19 @@ const Intro = () => {
   const navigation = useNavigation();
   const user = useSelector(state => state.auth.user);
 
-useEffect(() => {
+  const scaleAnim = useRef(new Animated.Value(0)).current; // initial scale 0
+
+  useEffect(() => {
+    // Animate the icon
+    Animated.timing(scaleAnim, {
+      toValue: 1, // final scale
+      duration: 1000, // 1 second
+      useNativeDriver: true,
+    }).start();
+  
   const timeout = setTimeout(() => {
     if (user) {
-      navigation.replace('Contact');
+      navigation.replace('MainTabs', { screen: 'Contact' });
     } else {
       navigation.replace('Login');
     }
@@ -21,7 +30,11 @@ useEffect(() => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>My Contact</Text>
+      <Animated.Image
+          source={require('../assets/icon.png')} 
+          style={[styles.logo, { transform: [{ scale: scaleAnim }] }]}
+          resizeMode="cover"
+        />
     </View>
   );
 };
@@ -39,5 +52,9 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     color: '#333',
+  },
+  logo: {
+    width: '100%',
+    height: '100%',
   },
 });
