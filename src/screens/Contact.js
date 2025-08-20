@@ -4,6 +4,9 @@ import { useNavigation } from '@react-navigation/native';
 import { loadContacts, deleteContact, clearContacts } from '../redux/slice/contactSlices';
 import { useSelector, useDispatch } from 'react-redux';
 import { logout } from '../redux/slice/authSlices';
+import  { LogoutBtn, AddContactBtn, DelBtn, EditBtn } from "../components/AppButton";
+import AppBackground from '../components/AppBackground';
+import Contacts from 'react-native-contacts';
 
 const Contact = ({ navigation }) => {
   const dispatch = useDispatch();
@@ -22,9 +25,39 @@ const Contact = ({ navigation }) => {
     navigation.navigate('Login');
   };
 
-  const handleDelete = (contactId) => {
-    dispatch(deleteContact({ userId: user.id, contactId }));
+  const handleDelete = async(contact) => {
+    try {
+      // 1. Delete from your app (Redux + backend)
+      dispatch(deleteContact({ userId: user.id, contactId: contact.id }));
+
+      // 2. Delete from phone contacts
+      const permission = await Contacts.requestPermission();
+
+      if (permission === 'authorized') {
+        // Find the contact in phone storage by name + number
+        const phoneContacts = await Contacts.getAll();
+
+        const match = phoneContacts.find(
+          (c) =>
+            c.displayName === contact.name &&
+            c.phoneNumbers.some((p) => p.number.replace(/\D/g, '') === contact.mobile.replace(/\D/g, ''))
+        );
+
+        if (match) {
+          await Contacts.deleteContact(match);
+          Alert.alert('Deleted', 'Contact removed from phone also');
+        } else {
+          console.log('No matching phone contact found');
+        }
+      } else {
+        Alert.alert('Permission denied', 'Cannot delete from phone contacts');
+      }
+    } catch (error) {
+      console.error('Error deleting contact:', error);
+      Alert.alert('Error', 'Could not delete contact');
+    }
   };
+
 
   return (
     <>
@@ -33,18 +66,7 @@ const Contact = ({ navigation }) => {
         backgroundColor="transparent"
         translucent={true}
       />
-
-      {/* Full-screen decorative background */}
-      <View style={styles.fullBackground}>
-        <View style={styles.circle1} />
-        <View style={styles.circle2} />
-        <View style={styles.circle3} />
-        <View style={styles.circle4} />
-        <View style={styles.circle5} />
-<View style={styles.circle6} />
-<View style={styles.circle7} />
-      </View>
-
+      <AppBackground>
       <View style={styles.headerContainer}>
         <Text style={styles.heading}>My Contacts</Text>
       </View>
@@ -61,22 +83,17 @@ const Contact = ({ navigation }) => {
               </View>
 
               <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                <TouchableOpacity
-                  style={styles.editbtn}
+                <EditBtn title='Edit'
                   onPress={() => navigation.navigate('AddContact', {
                     contact: item,
                     index: index,
                   })}
-                >
-                  <Text style={styles.text}>Edit</Text>
-                </TouchableOpacity>
+                />
 
-                <TouchableOpacity
+                <DelBtn title='Delete'
                   style={styles.delbtn}
-                  onPress={() => handleDelete(item.id)}
-                >
-                  <Text style={styles.text}>Delete</Text>
-                </TouchableOpacity>
+                  onPress={() => handleDelete(item)}
+                />
               </View>
             </View>
           )}
@@ -86,101 +103,26 @@ const Contact = ({ navigation }) => {
         />
 
         <View style={styles.bottomRow}>
-          <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
-            <Text style={styles.text}>Logout</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.addBtn}
-            onPress={() => navigation.navigate('AddContact')}
-          >
-            <Text style={styles.text}>Add New Contact</Text>
-          </TouchableOpacity>
+          <LogoutBtn
+            title="Logout"
+            onPress={handleLogout}
+          />
+          <AddContactBtn
+            title="Add New Contact"
+            onPress={() => navigation.navigate("AddContact")}
+          />
         </View>
       </View>
+      </AppBackground>
+
     </>
+    
   );
 };
 
 export default Contact;
 
 const styles = StyleSheet.create({
-  fullBackground: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: '#cfe9ff',
-  },
-  circle1: {
-    position: 'absolute',
-    width: 150,
-    height: 150,
-    borderRadius: 75,
-    backgroundColor: 'rgba(255,255,255,0.3)',
-    top: 50,
-    left: 30,
-  },
-  circle2: {
-    position: 'absolute',
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: 'rgba(255,255,255,0.25)',
-    top: 120,
-    right: 40,
-  },
-  circle3: {
-    position: 'absolute',
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    bottom: 50,
-    left: 60,
-  },
-  circle4: {
-    position: 'absolute',
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: 'rgba(255,255,255,0.15)',
-    bottom: 100,
-    right: 50,
-  },
-  headerContainer: {
-    backgroundColor: 'transparent',
-    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight + 10 : 50,
-    paddingBottom: 10,
-  },
-  circle5: {
-  position: 'absolute',
-  width: 180,
-  height: 180,
-  borderRadius: 90,
-  backgroundColor: 'rgba(255,255,255,0.1)',
-  top: '45%',
-  left: '10%',
-},
-circle6: {
-  position: 'absolute',
-  width: 140,
-  height: 140,
-  borderRadius: 70,
-  backgroundColor: 'rgba(255,255,255,0.1)',
-  top: '30%',
-  right: '20%',
-},
-circle7: {
-  position: 'absolute',
-  width: 100,
-  height: 100,
-  borderRadius: 50,
-  backgroundColor: 'rgba(255,255,255,0.1)',
-  top: '60%',
-  right: '10%',
-},
-
   container: {
     flex: 1,
     paddingTop: 5,
@@ -218,24 +160,6 @@ circle7: {
     fontWeight: '600',
     color: '#000',
   },
-  addBtn: {
-    flex: 1,
-    height: 50,
-    borderRadius: 30,
-    backgroundColor: '#4caf50',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginLeft: 10,
-  },
-  logoutBtn: {
-    flex: 1,
-    height: 50,
-    borderRadius: 30,
-    backgroundColor: '#e53935',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 10,
-  },
   text: {
     color: '#fff',
     fontWeight: '600',
@@ -244,21 +168,6 @@ circle7: {
     textAlign: 'center',
     marginTop: 20,
     color: '#777',
-  },
-  delbtn: {
-    backgroundColor: '#ff4d4d',
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: 6,
-    marginLeft: 10,
-  },
-  editbtn: {
-    backgroundColor: '#4caf50',
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderRadius: 6,
   },
   bottomRow: {
     flexDirection: 'row',

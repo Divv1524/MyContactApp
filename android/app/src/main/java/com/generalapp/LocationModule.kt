@@ -27,6 +27,7 @@ class NativeLocationModule(reactContext: ReactApplicationContext) :
     private val NOTIFICATION_ID = 101
     private val MIN_TIME_BW_UPDATES = 10000L // ms
     private val CHANNEL_ID = "location_channel_id"
+    private var isCurrentlyTracking = false
 
     companion object {
         const val NAME = "NativeLocationModule"
@@ -89,6 +90,7 @@ class NativeLocationModule(reactContext: ReactApplicationContext) :
                     Looper.getMainLooper()
                 )
             }
+            isCurrentlyTracking = true
 
             getLastKnownLocation()
             sendOrUpdateLocationNotification(lastKnownLocation)
@@ -108,6 +110,7 @@ class NativeLocationModule(reactContext: ReactApplicationContext) :
         try {
             locationManager?.removeUpdates(this)
             NotificationManagerCompat.from(reactApplicationContext).cancel(NOTIFICATION_ID)
+            isCurrentlyTracking = false
             promise.resolve("Location updates stopped")
             Log.d(TAG, "Location updates stopped")
         } catch (e: Exception) {
@@ -121,7 +124,7 @@ class NativeLocationModule(reactContext: ReactApplicationContext) :
         try {
             getLastKnownLocation()
             if (lastKnownLocation != null) {
-                promise.resolve(locationToMap(lastKnownLocation!!))
+                promise.resolve(locationToMap(lastKnownLocation!!))  //Converts Location to WritableMap (JS object) using locationToMap.
             } else {
                 promise.reject("NO_LOCATION", "No location available")
             }
@@ -130,6 +133,57 @@ class NativeLocationModule(reactContext: ReactApplicationContext) :
             promise.reject("GET_LOCATION_ERROR", e.message)
         }
     }
+
+@ReactMethod
+    fun isTrackingActive(promise: Promise) {
+        try {
+            // IMPROVED: Check actual tracking state, not just permissions
+            val hasPermission = hasLocationPermission()
+            val isTracking = isCurrentlyTracking && hasPermission
+            
+            Log.d(TAG, "Tracking status - isCurrentlyTracking: $isCurrentlyTracking, hasPermission: $hasPermission, result: $isTracking")
+            
+            promise.resolve(isTracking)
+        } catch (e: Exception) {
+            promise.reject("TRACKING_CHECK_ERROR", e.message)
+        }
+    }
+
+    // ADD THIS: Method to handle app lifecycle
+    @ReactMethod
+    fun syncTrackingState(promise: Promise) {
+        try {
+            // When app starts, assume tracking is stopped unless we can verify it's active
+            // In most cases, when app is killed, tracking stops too
+            isCurrentlyTracking = false
+            
+            // Cancel any existing notifications since we can't be sure of state
+            NotificationManagerCompat.from(reactApplicationContext).cancel(NOTIFICATION_ID)
+            
+            promise.resolve(false)
+            Log.d(TAG, "Tracking state synced: false")
+        } catch (e: Exception) {
+            promise.reject("SYNC_ERROR", e.message)
+        }
+    }
+
+    // OVERRIDE: Handle when providers are disabled
+    override fun onProviderDisabled(provider: String) {
+        Log.d(TAG, "Provider disabled: $provider")
+        
+        // If all providers are disabled, stop tracking
+        val locationManager = this.locationManager
+        if (locationManager != null) {
+            val isGPSEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)
+            val isNetworkEnabled = locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)
+            
+            if (!isGPSEnabled && !isNetworkEnabled) {
+                isCurrentlyTracking = false
+                NotificationManagerCompat.from(reactApplicationContext).cancel(NOTIFICATION_ID)
+            }
+        }
+    }
+
 
     private fun getLastKnownLocation() {
         try {
@@ -153,7 +207,9 @@ class NativeLocationModule(reactContext: ReactApplicationContext) :
     private fun sendLocationUpdate(location: Location) {
         try {
             reactApplicationContext
-                .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter::class.java)
+                .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter::class.java) 
+                //RCTDeviceEventEmitter is the internal React Native class that handles event broadcasting.
+                //DeviceEventManagerModule specific JS module used for sending events from native to JS.
                 .emit(LOCATION_UPDATE_EVENT, locationToMap(location))
 
             Log.d(TAG, "Location update sent: ${location.latitude}, ${location.longitude}")

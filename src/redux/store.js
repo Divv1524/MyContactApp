@@ -8,11 +8,11 @@ import { FLUSH, REHYDRATE, PAUSE, PERSIST, PURGE, REGISTER } from 'redux-persist
 import authReducer from './slice/authSlices';
 import contactReducer from './slice/contactSlices';
 import newsReducer from './slice/newsSlices';
-import locationReducer from './slice/locationSlice';
+import locationReducer from './slice/locationSlices';
 
 
 // Saga root
-import rootSaga from './saga';
+import rootSaga from './saga/rootSaga';
 
 //Create Saga middleware
 const createSagaMiddleware = require('redux-saga').default;

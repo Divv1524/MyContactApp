@@ -16,6 +16,7 @@ import {
 import { useDispatch, useSelector } from 'react-redux';
 import moment from 'moment';
 import { fetchNewsRequest, loadMoreNews, resetNews, setDateFilter } from '../redux/slice/newsSlices';
+import AppButton from '../components/AppButton';
 
 const News = () => {
   const dispatch = useDispatch();
@@ -103,13 +104,10 @@ const News = () => {
             onChangeText={setLocalTo}
             placeholderTextColor="#999"
           />
-          <TouchableOpacity
-            style={[styles.searchButton, loading && { opacity: 0.6 }]}
+          <AppButton title='Search News'
             onPress={handleSearch}
             disabled={loading}
-          >
-            <Text style={styles.searchButtonText}>Search News</Text>
-          </TouchableOpacity>
+          />
         </View>
 
         {/* Error Message */}
@@ -169,17 +167,6 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     backgroundColor: '#fff',
     fontSize: 14,
-  },
-  searchButton: {
-    backgroundColor: '#007AFF',
-    paddingVertical: 12,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  searchButtonText: {
-    color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 16,
   },
   card: {
     backgroundColor: '#fff',

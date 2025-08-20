@@ -1,5 +1,5 @@
 // src/screens/LocationScreen.js
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -19,6 +19,7 @@ import {
 import RNFS from 'react-native-fs';
 import Share from 'react-native-share';
 import { useDispatch, useSelector } from 'react-redux';
+import { RefreshBtn, StartStopBtn, ExportCSVBtn, ClearFileBtn } from "../components/LocationButton";
 import {
   setCurrentLocation,
   setLocationError,
@@ -27,7 +28,7 @@ import {
   clearLocationError,
   addLocationLog,
   clearLogs,
-} from '../redux/slice/locationSlice';
+} from '../redux/slice/locationSlices';
 import LocationService from '../services/LocationService';
 import MapView, { Marker } from 'react-native-maps';
 
@@ -48,15 +49,49 @@ async function requestPermissions() {
   }
 }
 
+
 const LocationScreen = () => {
   const dispatch = useDispatch();
   const { currentLocation, isTracking, error, loading, logs: locationHistory } = useSelector(
     (state) => state.location
   );
   const unsubscribeRef = useRef(null);
+  const mapRef = useRef(null);
+
+  const [region, setRegion] = useState({
+    latitude: currentLocation?.latitude,
+    longitude: currentLocation?.longitude,
+    latitudeDelta: 0.005,
+    longitudeDelta: 0.005,
+  });
 
   useEffect(() => {
     requestPermissions().then(() => {
+      // Sync native tracking state with Redux
+      // LocationService.isTrackingActive()
+      //   .then((active) => {
+      //     dispatch(setLocationTracking(active));
+      //     console.log("📡 Native tracking status:", active);
+      //   })
+      //   .catch((err) => {
+      //     console.warn("Tracking check failed:", err);
+      //     dispatch(setLocationTracking(false));
+      //   });
+
+      LocationService.syncTrackingState()
+      .then(() => {
+        // After syncing, check the actual tracking status
+        return LocationService.isTrackingActive();
+      })
+      .then((active) => {
+        dispatch(setLocationTracking(active));
+        console.log("📡 Synced tracking status:", active);
+      })
+      .catch((err) => {
+        console.warn("Tracking sync/check failed:", err);
+        dispatch(setLocationTracking(false));
+      });
+
       const unsubscribe = LocationService.subscribeToLocationUpdates((location) => {
         console.log('Location update received:', location);
         dispatch(setCurrentLocation(location));
@@ -80,12 +115,25 @@ const LocationScreen = () => {
     };
   }, [dispatch]);
 
+  useEffect(() => {
+    if (currentLocation) {
+      const newRegion = {
+        latitude: currentLocation.latitude,
+        longitude: currentLocation.longitude,
+        latitudeDelta: 0.005,
+        longitudeDelta: 0.005,
+      };
+      setRegion(newRegion);
+    }
+  }, [currentLocation]);
+
   const handleGetCurrentLocation = async () => {
     try {
       dispatch(setLocationLoading(true));
       dispatch(clearLocationError());
 
       const location = await LocationService.getCurrentLocation();
+      console.log("📍 Refreshed location:", location); 
       dispatch(setCurrentLocation(location));
       dispatch(addLocationLog({
         latitude: location.latitude,
@@ -100,6 +148,7 @@ const LocationScreen = () => {
       dispatch(setLocationLoading(false));
     }
   };
+
 
   const handleStartTracking = async () => {
     try {
@@ -139,6 +188,7 @@ const LocationScreen = () => {
     }
   };
 
+
   //Export history to CSV
   const handleExportCSV = async () => {
     if (locationHistory.length === 0) {
@@ -164,6 +214,10 @@ const LocationScreen = () => {
         filename: 'location_log',
       });
     } catch (err) {
+      if (err?.message?.includes('User did not share')) {
+        console.log("Share cancelled by user");
+        return; // don't show error alert
+      }
       console.error("CSV Export Error:", err);
       Alert.alert('Error', 'Failed to export CSV');
     }
@@ -178,9 +232,20 @@ const LocationScreen = () => {
     Alert.alert("Success", "All location logs cleared.");
   };
 
+  const handleZoom = (type) => {
+    const factor = type === 'in' ? 0.5 : 2;
+    const newRegion = {
+      ...region,
+      latitudeDelta: region.latitudeDelta * factor,
+      longitudeDelta: region.longitudeDelta * factor,
+    };
+    setRegion(newRegion);
+    mapRef.current?.animateToRegion(newRegion, 300);
+  };
+
   return (
     <>
-    <StatusBar barStyle="dark-content" backgroundColor="transparent" translucent={true} />
+      <StatusBar barStyle="dark-content" backgroundColor="transparent" translucent={true} />
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -190,121 +255,78 @@ const LocationScreen = () => {
           keyboardShouldPersistTaps="handled"
         >
           <TouchableWithoutFeedback onPress={() => {
-                Keyboard.dismiss();
-              }}>
-    <View style={styles.container}>
-      <View style={[styles.header,styles.headerWithStatusBar]}>
-        <Text style={styles.title}>📍 Live Location Tracker</Text>
-        {error && (
-          <View style={styles.errorContainer}>
-            <Text style={styles.errorText}>⚠ {error}</Text>
-          </View>
-        )}
-      </View>
+            Keyboard.dismiss();
+          }}>
+            <View style={styles.container}>
+              <View style={[styles.header, styles.headerWithStatusBar]}>
+                <Text style={styles.title}>📍 Live Location Tracker</Text>
+                {error && (
+                  <View style={styles.errorContainer}>
+                    <Text style={styles.errorText}>⚠ {error}</Text>
+                  </View>
+                )}
+              </View>
 
-      <View style={styles.mapWrapper}>
-        {currentLocation ? (
-          <MapView
-            style={styles.map}
-            provider={MapView.PROVIDER_GOOGLE}
-            initialRegion={{
-              latitude: currentLocation.latitude,
-              longitude: currentLocation.longitude,
-              latitudeDelta: 0.005,
-              longitudeDelta: 0.005,
-            }}
-            region={{
-              latitude: currentLocation.latitude,
-              longitude: currentLocation.longitude,
-              latitudeDelta: 0.005,
-              longitudeDelta: 0.005,
-            }}
-            showsUserLocation={true}
-            followsUserLocation={true}
-          >
-            <Marker
-              coordinate={{
-                latitude: currentLocation.latitude,
-                longitude: currentLocation.longitude,
-              }}
-              title="You are here"
-            />
-          </MapView>
-        ) : (
-          <View style={[styles.map, styles.mapPlaceholder]}>
-            <Text style={styles.mapPlaceholderText}>📡 Waiting for GPS fix...</Text>
-          </View>
-        )}
+              <View style={styles.mapWrapper}>
+                {currentLocation ? (
+                  <MapView
+                    style={styles.map}
+                    provider={MapView.PROVIDER_GOOGLE}
+                    region={region}
+                    showsUserLocation={true}
+                    followsUserLocation={true}
+                  >
+                    <Marker
+                      coordinate={region}
+                      title="You are here"
+                    />
+                  </MapView>
+                ) : (
+                  <View style={[styles.map, styles.mapPlaceholder]}>
+                    <Text style={styles.mapPlaceholderText}>📡 Waiting for GPS fix...</Text>
+                  </View>
+                )}
 
-        {/* Overlay pin & info */}
-        {currentLocation && (
-          <View style={styles.overlay}>
-            <Text style={styles.coordinatesText}>
-              Latitude: {currentLocation.latitude.toFixed(6)}
-            </Text>
-            <Text style={styles.coordinatesText}>
-              Longitude: {currentLocation.longitude.toFixed(6)}
-            </Text>
-            <Text style={styles.accuracyText}>
-              Accuracy: ±{currentLocation.accuracy.toFixed(2)} m
-            </Text>
-            <Text style={styles.timestampText}>
-              Last update: {new Date(currentLocation.timestamp).toLocaleTimeString()}
-            </Text>
-          </View>
-        )}
-      </View>
+                {/* Overlay pin & info */}
+                {currentLocation && (
+                  <View style={styles.overlay}>
+                    <Text style={styles.coordinatesText}>
+                      Latitude: {currentLocation.latitude.toFixed(6)}
+                    </Text>
+                    <Text style={styles.coordinatesText}>
+                      Longitude: {currentLocation.longitude.toFixed(6)}
+                    </Text>
+                    <Text style={styles.accuracyText}>
+                      Accuracy: ±{currentLocation.accuracy.toFixed(2)} m
+                    </Text>
+                    <Text style={styles.timestampText}>
+                      Last update: {new Date(currentLocation.timestamp).toLocaleTimeString()}
+                    </Text>
+                  </View>
+                )}
+              </View>
 
-      <View style={styles.controlsContainer}>
-        <View style={styles.buttonRow}>
-          <TouchableOpacity style={[styles.button, styles.primaryButton]} onPress={handleGetCurrentLocation}disabled={loading}>
-            {loading ? (
-              <ActivityIndicator color="white" size="small" />
-            ) : (
-              <Text style={styles.buttonText}>📡 Refresh</Text>
-            )}
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.button, isTracking ? styles.dangerButton : styles.successButton,]}
-            onPress={isTracking ? handleStopTracking : handleStartTracking}
-            disabled={loading}
-          >
-            {loading ? (
-              <ActivityIndicator color="white" size="small" />
-            ) : (
-              <Text style={styles.buttonText}>
-                {isTracking ? '⛔ Stop' : '▶ Start'}
-              </Text>
-            )}
-          </TouchableOpacity>
+              <View style={styles.controlsContainer}>
+                <View style={styles.buttonRow}>
+                  <RefreshBtn loading={loading} onPress={handleGetCurrentLocation} />
+                  <StartStopBtn loading={loading} isTracking={isTracking} onPress={isTracking ? handleStopTracking : handleStartTracking} />
+                </View>
 
-        </View>
+                <View style={styles.buttonRow}>
+                  <ExportCSVBtn title="Export CSV" onPress={handleExportCSV} />
+                  <ClearFileBtn title="Clear File" onPress={handleClearLogs} />
+                </View>
 
-        <View style={styles.buttonRow}>
-          <TouchableOpacity style={[styles.button, styles.successButton]}onPress={handleExportCSV}>
-            <Text style={styles.buttonText}>Export CSV</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={[styles.button, styles.dangerButton]} onPress={handleClearLogs}>
-            <Text style={styles.buttonText}>Clear File</Text>
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.statusContainer}>
-          <Text style={styles.statusText}>
-            {isTracking ? '🟢 Tracking Active' : '🔴 Tracking Inactive'}
-          </Text>
-          {/* {currentLocation && (
-            <Text style={styles.statusText}>
-              Provider: {currentLocation.provider || 'Unknown'}
-            </Text>
-          )} */}
-        </View>
-      </View>
-    </View>
-    </TouchableWithoutFeedback>
-    </ScrollView>
-    </KeyboardAvoidingView>
+                <View style={styles.statusContainer}>
+                  <Text style={styles.statusText}>
+                    {isTracking ? '🟢 Tracking Active' : '🔴 Tracking Inactive'}
+                  </Text>
+                </View>
+              </View>
+            </View>
+          </TouchableWithoutFeedback>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </>
   );
 };
@@ -313,7 +335,7 @@ const { width } = Dimensions.get('window');
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F9FAFB' },
-  header: { backgroundColor: '#2563EB', padding: 20,  },
+  header: { backgroundColor: '#2563EB', padding: 20, },
   headerWithStatusBar: {
     marginTop: Platform.OS === 'android' ? StatusBar.currentHeight + 10 : 40,
   },
@@ -366,20 +388,6 @@ const styles = StyleSheet.create({
   timestampText: { fontSize: 12, color: '#6B7280', marginTop: 5 },
   controlsContainer: { padding: 20, backgroundColor: 'white', borderTopWidth: 1, borderTopColor: '#E5E7EB' },
   buttonRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 20 },
-  button: {
-    flex: 1,
-    padding: 14,
-    borderRadius: 8,
-    marginHorizontal: 5,
-    alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: 48,
-     maxWidth: '48%',
-  },
-  primaryButton: { backgroundColor: '#2563EB' },
-  successButton: { backgroundColor: '#10B981' },
-  dangerButton: { backgroundColor: '#DC2626' },
-  buttonText: { color: 'white', fontSize: 15, fontWeight: 'bold' },
   statusContainer: { alignItems: 'center' },
   statusText: { fontSize: 15, color: '#374151', marginVertical: 2 },
 });

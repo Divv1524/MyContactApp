@@ -15,6 +15,9 @@ import LocationScreen from './src/screens/LocationScreen';
 import Profile from './src/screens/Profile';
 import { Image } from 'react-native';
 import { useSelector } from 'react-redux';
+import { LogBox } from "react-native";
+
+LogBox.ignoreAllLogs(true);
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();

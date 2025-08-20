@@ -29,7 +29,7 @@ const SignUp = () => {
   const [profileImage, setProfileImage] = useState(null);
   const [showPassword, setShowPassword] = useState(false);
   const navigation = useNavigation();
-  const input=useRef();
+  const input = useRef();
   const dispatch = useDispatch();
 
   const requestCameraPermission = async () => {
@@ -128,82 +128,82 @@ const SignUp = () => {
 
   return (
     <>
-    <StatusBar barStyle="dark-content" backgroundColor="#f9fcff" />
+      <StatusBar barStyle="dark-content" backgroundColor="#f9fcff" />
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
-    <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
-      <TouchableWithoutFeedback onPress={() => {
+        <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+          <TouchableWithoutFeedback onPress={() => {
             dismissFocus();
             Keyboard.dismiss();
           }}>
-      <View style={styles.container}>
-        <Text style={styles.title}>Create Your Account</Text>
+            <View style={styles.container}>
+              <Text style={styles.title}>Create Your Account</Text>
 
-        <TouchableOpacity onPress={chooseImage} style={styles.avatarContainer}>
-          <Image
-            source={
-              profileImage
-                ? { uri: profileImage }
-                : require('../assets/default-avatar.png')
-            }
-            style={styles.avatar}
-          />
-          <Text style={styles.uploadText}>Upload Photo</Text>
-        </TouchableOpacity>
+              <TouchableOpacity onPress={chooseImage} style={styles.avatarContainer}>
+                <Image
+                  source={
+                    profileImage
+                      ? { uri: profileImage }
+                      : require('../assets/default-avatar.png')
+                  }
+                  style={styles.avatar}
+                />
+                <Text style={styles.uploadText}>Upload Photo</Text>
+              </TouchableOpacity>
 
-        <TouchableOpacity style={styles.secondaryButton} onPress={takePhoto}>
-          <Text style={styles.secondaryButtonText}>📷 Take Photo</Text>
-        </TouchableOpacity>
+              <TouchableOpacity style={styles.secondaryButton} onPress={takePhoto}>
+                <Text style={styles.secondaryButtonText}>📷 Take Photo</Text>
+              </TouchableOpacity>
 
-        <TextInput
-          style={styles.input}
-          placeholder="Full Name"
-          value={name}
-          onChangeText={setName}
-          placeholderTextColor="#999"
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="Email"
-          keyboardType="email-address"
-          value={email}
-          onChangeText={setEmail}
-          placeholderTextColor="#999"
-        />
-        <View style={styles.passwordContainer}>
-        <TextInput
-          style={styles.passwordInput}
-          placeholder="Password"
-          secureTextEntry={!showPassword}
-          value={password}
-          onChangeText={setPassword}
-          placeholderTextColor="#999"
-        />
-        <TouchableOpacity
-                          style={styles.eyeButton}
-                          onPress={() => setShowPassword(!showPassword)}
-                        >
-                          <Ionicons
-                            name={showPassword ? "eye-off" : "eye"}
-                            size={22}
-                            color="#666"
-                          />
-                        </TouchableOpacity>
-        </View>
+              <TextInput
+                style={styles.input}
+                placeholder="Full Name"
+                value={name}
+                onChangeText={setName}
+                placeholderTextColor="#999"
+              />
+              <TextInput
+                style={styles.input}
+                placeholder="Email"
+                keyboardType="email-address"
+                value={email}
+                onChangeText={setEmail}
+                placeholderTextColor="#999"
+              />
+              <View style={styles.passwordContainer}>
+                <TextInput
+                  style={styles.passwordInput}
+                  placeholder="Password"
+                  secureTextEntry={!showPassword}
+                  value={password}
+                  onChangeText={setPassword}
+                  placeholderTextColor="#999"
+                />
+                <TouchableOpacity
+                  style={styles.eyeButton}
+                  onPress={() => setShowPassword(!showPassword)}
+                >
+                  <Ionicons
+                    name={showPassword ? "eye-off" : "eye"}
+                    size={22}
+                    color="#666"
+                  />
+                </TouchableOpacity>
+              </View>
 
-        <TouchableOpacity style={styles.button} onPress={handleSignUp}>
-          <Text style={styles.buttonText}>Create Account</Text>
-        </TouchableOpacity>
+              <TouchableOpacity style={styles.button} onPress={handleSignUp}>
+                <Text style={styles.buttonText}>Create Account</Text>
+              </TouchableOpacity>
 
-        <TouchableOpacity onPress={() => navigation.navigate('Login')}>
-          <Text style={styles.link}>Already have an account? Login</Text>
-        </TouchableOpacity>
-      </View>
-      </TouchableWithoutFeedback>
-    </ScrollView>
-    </KeyboardAvoidingView>
+              <TouchableOpacity onPress={() => navigation.navigate('Login')}>
+                <Text style={styles.link}>Already have an account? Login</Text>
+              </TouchableOpacity>
+            </View>
+          </TouchableWithoutFeedback>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </>
   );
 };

@@ -4,7 +4,9 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useSelector, useDispatch } from 'react-redux';
 import { updateProfile } from '../redux/slice/authSlices';
+import {ProfileButton} from '../components/AppButton'; 
 import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
+import AppBackground from '../components/AppBackground';
 
 const Profile = () => {
     const dispatch = useDispatch();
@@ -128,17 +130,8 @@ const Profile = () => {
     return (
         <>
             <StatusBar translucent backgroundColor="transparent" barStyle="dark-content" />
+            <AppBackground>
 
-            {/* Full-screen gradient background */}
-            <View style={styles.fullBackground}>
-                <View style={styles.circle1} />
-                <View style={styles.circle2} />
-                <View style={styles.circle3} />
-                <View style={styles.circle4} />
-                <View style={styles.circle5} />
-                <View style={styles.circle6} />
-                <View style={styles.circle7} />
-            </View>
 
             <View style={styles.headerContainer}>
                 <Text style={styles.heading}>My Profile</Text>
@@ -211,21 +204,20 @@ const Profile = () => {
                 {/* Buttons */}
                 <View style={styles.buttonRow}>
                     {!editing ? (
-                        <TouchableOpacity style={styles.button} onPress={() => {
+                        <ProfileButton title="Edit" onPress={() => {
                             setName(user?.name || '');
                             setEmail(user?.email || '');
                             setPassword(user?.password || '');
                             setEditing(true);
-                        }}>
-                            <Text style={styles.buttonText}>Edit</Text>
-                        </TouchableOpacity>
+                        }}
+                        />
                     ) : (
-                        <TouchableOpacity style={styles.button} onPress={handleSave}>
-                            <Text style={styles.buttonText}>Save</Text>
-                        </TouchableOpacity>
+                        <ProfileButton title="Save" onPress={handleSave}
+                        />
                     )}
                 </View>
             </View>
+            </AppBackground>
         </>
     );
 };
@@ -233,81 +225,10 @@ const Profile = () => {
 export default Profile;
 
 const styles = StyleSheet.create({
-    fullBackground: {
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        backgroundColor: '#cfe9ff',
-    },
-    circle1: {
-        position: 'absolute',
-        width: 150,
-        height: 150,
-        borderRadius: 75,
-        backgroundColor: 'rgba(255,255,255,0.3)',
-        top: 50,
-        left: 30,
-    },
-    circle2: {
-        position: 'absolute',
-        width: 100,
-        height: 100,
-        borderRadius: 50,
-        backgroundColor: 'rgba(255,255,255,0.25)',
-        top: 120,
-        right: 40,
-    },
-    circle3: {
-        position: 'absolute',
-        width: 120,
-        height: 120,
-        borderRadius: 60,
-        backgroundColor: 'rgba(255,255,255,0.2)',
-        bottom: 50,
-        left: 60,
-    },
-    circle4: {
-        position: 'absolute',
-        width: 80,
-        height: 80,
-        borderRadius: 40,
-        backgroundColor: 'rgba(255,255,255,0.15)',
-        bottom: 100,
-        right: 50,
-    },
-    circle5: {
-        position: 'absolute',
-        width: 180,
-        height: 180,
-        borderRadius: 90,
-        backgroundColor: 'rgba(255,255,255,0.15)',
-        top: '30%',
-        left: '10%',
-    },
-    circle6: {
-        position: 'absolute',
-        width: 140,
-        height: 140,
-        borderRadius: 70,
-        backgroundColor: 'rgba(255,255,255,0.1)',
-        top: '55%',
-        right: '20%',
-    },
-    circle7: {
-        position: 'absolute',
-        width: 100,
-        height: 100,
-        borderRadius: 50,
-        backgroundColor: 'rgba(255,255,255,0.05)',
-        top: '50%',
-        left: '40%',
-    },
     container: {
         flex: 1,
-        padding: 20,
-        backgroundColor: 'transparent', // keep gradient visible
+        padding: 10,
+        backgroundColor: 'transparent',
     },
     headerContainer: {
         backgroundColor: 'transparent',
@@ -323,21 +244,21 @@ const styles = StyleSheet.create({
         textAlign: 'center',
     },
     imageContainer: {
-    alignSelf: 'center',
-    marginVertical: 20,
-    position: 'relative',
-    borderWidth: 4,              // new: thickness of dark blue border
-    borderColor: '#003366',      // new: dark blue color
-    borderRadius: 70,            // must be half of image + border to make perfect circle
-    padding: 4,                  // optional: some spacing between image and border
-},
-profileImage: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    borderWidth: 2,
-    borderColor: '#ccc',
-},
+        alignSelf: 'center',
+        marginVertical: 20,
+        position: 'relative',
+        borderWidth: 4,              
+        borderColor: '#003366',
+        borderRadius: 70,            
+        padding: 4,                 
+    },
+    profileImage: {
+        width: 120,
+        height: 120,
+        borderRadius: 60,
+        borderWidth: 2,
+        borderColor: '#ccc',
+    },
 
     editIcon: {
         position: 'absolute',
@@ -382,16 +303,5 @@ profileImage: {
     buttonRow: {
         marginTop: 30,
         alignItems: 'center',
-    },
-    button: {
-        backgroundColor: 'tomato',
-        paddingVertical: 12,
-        paddingHorizontal: 30,
-        borderRadius: 8,
-    },
-    buttonText: {
-        color: '#fff',
-        fontSize: 16,
-        fontWeight: 'bold',
     },
 });

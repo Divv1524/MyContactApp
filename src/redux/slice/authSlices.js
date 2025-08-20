@@ -17,7 +17,7 @@ export const signUp = createAsyncThunk(
   'auth/signUp',
   async ({ email, password, name, profileImage }, { rejectWithValue }) => {
     try {
-        ////Get existing users from AsyncStorage (or empty array if none)
+        //Get existing users from AsyncStorage (or empty array if none)
       const usersData = await AsyncStorage.getItem('users');
       const users = usersData ? JSON.parse(usersData) : [];
 
