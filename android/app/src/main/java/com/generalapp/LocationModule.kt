@@ -290,7 +290,7 @@ class NativeLocationModule(reactContext: ReactApplicationContext) :
         Log.d(TAG, "Provider enabled: $provider")
     }
 
-    override fun onProviderDisabled(provider: String) {
-        Log.d(TAG, "Provider disabled: $provider")
-    }
+    // override fun onProviderDisabled(provider: String) {
+    //     Log.d(TAG, "Provider disabled: $provider")
+    // }
 }
