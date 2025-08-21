@@ -67,17 +67,6 @@ const LocationScreen = () => {
 
   useEffect(() => {
     requestPermissions().then(() => {
-      // Sync native tracking state with Redux
-      // LocationService.isTrackingActive()
-      //   .then((active) => {
-      //     dispatch(setLocationTracking(active));
-      //     console.log("📡 Native tracking status:", active);
-      //   })
-      //   .catch((err) => {
-      //     console.warn("Tracking check failed:", err);
-      //     dispatch(setLocationTracking(false));
-      //   });
-
       LocationService.syncTrackingState()
       .then(() => {
         // After syncing, check the actual tracking status

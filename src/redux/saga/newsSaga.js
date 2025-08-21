@@ -6,7 +6,7 @@ import {
 } from '../slice/newsSlices';
 
 // Replace with your actual API key
-const API_KEY = '5e34707303fd4b349245e67ec196d41d';
+const API_KEY = '5db0ef7c0efc477db5d175e866e147ca';
 
 const getNewsState = (state) => state.news;
 
@@ -17,6 +17,7 @@ function* fetchNewsWorker() {
 
     // Build URL dynamically
     let url = `https://newsapi.org/v2/everything?domains=wsj.com&page=${page}&pageSize=${pageSize}&apiKey=${API_KEY}`;
+    // let url = `https://newsapi.org/v2/everything?q=apple&page=${page}&pageSize=${pageSize}&apiKey=${API_KEY}`;
 
     if (fromDate) {
       url += `&from=${fromDate}`;

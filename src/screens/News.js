@@ -12,8 +12,10 @@ import {
   RefreshControl,
   StatusBar,
   Platform,
+  Alert, Button
 } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import moment from 'moment';
 import { fetchNewsRequest, loadMoreNews, resetNews, setDateFilter } from '../redux/slice/newsSlices';
 import AppButton from '../components/AppButton';
@@ -24,6 +26,9 @@ const News = () => {
 
   const [localFrom, setLocalFrom] = useState(fromDate);
   const [localTo, setLocalTo] = useState(toDate);
+  const [showFromPicker, setShowFromPicker] = useState(false);
+  const [showToPicker, setShowToPicker] = useState(false);
+
 
   useEffect(() => {
     dispatch(fetchNewsRequest());
@@ -34,6 +39,10 @@ const News = () => {
   };
 
   const handleSearch = () => {
+    if (!localFrom || !localTo) {
+      Alert.alert('Error', 'Please select both From and To dates.');
+      return;
+    }
     dispatch(resetNews());
     dispatch(setDateFilter({ fromDate: localFrom, toDate: localTo }));
     dispatch(fetchNewsRequest());
@@ -90,20 +99,66 @@ const News = () => {
 
         {/* Filter Inputs */}
         <View style={styles.filterContainer}>
-          <TextInput
-            style={styles.input}
-            placeholder="From date (YYYY-MM-DD)"
-            value={localFrom}
-            onChangeText={setLocalFrom}
-            placeholderTextColor="#999"
-          />
-          <TextInput
-            style={styles.input}
-            placeholder="To date (YYYY-MM-DD)"
-            value={localTo}
-            onChangeText={setLocalTo}
-            placeholderTextColor="#999"
-          />
+
+          {/* Date Filters */}
+          <TouchableOpacity
+            style={styles.dateButton}
+            onPress={() => setShowFromPicker(true)}
+          >
+            <Text style={styles.dateButtonText}>
+              {localFrom ? `From: ${localFrom}` : 'Select From Date'}
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.dateButton}
+            onPress={() => setShowToPicker(true)}
+          >
+            <Text style={styles.dateButtonText}>
+              {localTo ? `To: ${localTo}` : 'Select To Date'}
+            </Text>
+          </TouchableOpacity>
+
+
+          {showFromPicker && (
+            <DateTimePicker
+              value={localFrom ? new Date(localFrom) : new Date()}
+              mode="date"
+              display="default"
+              maximumDate={new Date()}
+              onChange={(event, selectedDate) => {
+                setShowFromPicker(false);
+                if (selectedDate) {
+                  const formatted = moment(selectedDate).format('YYYY-MM-DD');
+                  const cutoff = new Date('2025-07-21');
+                  if (selectedDate < cutoff) {
+                    Alert.alert('Invalid Date', 'Please select a date after July 20, 2025.');
+                  } else {
+                    setLocalFrom(formatted);
+                    if (localTo && new Date(localTo) < selectedDate) setLocalTo(null);
+                  }
+                }
+              }}
+            />
+          )}
+
+          {showToPicker && (
+            <DateTimePicker
+              value={localTo ? new Date(localTo) : new Date()}
+              mode="date"
+              display="default"
+              maximumDate={new Date()}
+              minimumDate={localFrom ? new Date(localFrom) : undefined}
+              onChange={(event, selectedDate) => {
+                setShowToPicker(false);
+                if (selectedDate) {
+                  const formatted = moment(selectedDate).format('YYYY-MM-DD');
+                  setLocalTo(formatted);
+
+                }
+              }}
+            />
+          )}
           <AppButton title='Search News'
             onPress={handleSearch}
             disabled={loading}
@@ -179,6 +234,28 @@ const styles = StyleSheet.create({
     shadowRadius: 5,
     shadowOffset: { width: 0, height: 2 },
   },
+  dateButton: {
+    paddingVertical: 14,
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#ddd',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
+  },
+
+  dateButtonText: {
+    fontSize: 15,
+    color: '#333',
+    fontWeight: '500',
+  },
+
   image: {
     width: '100%',
     height: 200,
