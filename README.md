@@ -99,3 +99,4 @@ To learn more about React Native, take a look at the following resources:
 - https://chatgpt.com/share/68a586e3-ac28-8005-ac54-0905685e032b
 https://github.com/McShriBabushka/notesApp
 https://drive.google.com/file/d/16qRdW1p4B6N-UQUZU9jTZ2cOH5_5AMEC/view?usp=drive_link
+https://docs.google.com/document/d/1hhEh3SOzBLAWzhubzMcBGhynXdewmVIARFfsYXCQzO0/edit?usp=sharing
